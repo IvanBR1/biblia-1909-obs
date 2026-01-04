@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Biblia - OBS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Panel de controles -->
+        <div class="control-panel">
+            <h3><i class="fas fa-sliders-h"></i> Controles</h3>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="book-select"><i class="fas fa-book"></i> Libro</label>
+                    <div class="select-container">
+                        <div class="select-search-container">
+                            <input type="text" id="book-search" class="select-with-search" placeholder="Buscar libro..."
+                                autocomplete="off">
+                            <span class="search-icon"><i class="fas fa-search"></i></span>
+                            <div id="book-dropdown" class="search-dropdown"></div>
+                        </div>
+                        <select id="book-select" style="display: none;">
+                            <!-- Las opciones se generarán dinámicamente -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="number-inputs">
+                        <div>
+                            <label for="chapter-input"><i class="fas fa-list-ol"></i> Capítulo</label>
+                            <input type="number" id="chapter-input" min="1" value="1" placeholder="Cap.">
+                        </div>
+                        <div>
+                            <label for="verse-input"><i class="fas fa-verse"></i> Versículo</label>
+                            <input type="number" id="verse-input" min="1" value="1" placeholder="Vs.">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="prev-verse" class="btn btn-primary" title="Versículo anterior">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="next-verse" class="btn btn-primary" title="Versículo siguiente">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="switch-container">
+                    <span class="switch-label">Mostrar/Ocultar</span>
+                    <label class="switch">
+                        <input type="checkbox" id="visibility-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de vista previa (solo actual) -->
+        <div class="preview-panel">
+            <h3><i class="fas fa-eye"></i> Vista Previa</h3>
+            <div class="preview-content">
+                <div id="preview-current" class="preview-verse current">
+                    <div class="verse-header">
+                        <span class="verse-ref">Actual</span>
+                    </div>
+                    <div class="verse-text">Seleccione un versículo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de historial -->
+        <div class="history-panel">
+            <h3><i class="fas fa-history"></i> Historial (últimos 10)</h3>
+            <ul id="history-list" class="history-list">
+                <!-- Historial se llenará dinámicamente -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="control.js"></script>
+</body>
+
+</html>
