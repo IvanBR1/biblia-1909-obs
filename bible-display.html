@@ -72,24 +72,6 @@
             margin-bottom: 10px;
         }
 
-        .verse-titles {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .verse-title {
-            font-size: 1.2rem;
-            color: var(--secondary-color);
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .verse-body {
-            font-size: 1.8rem;
-            line-height: 1.6;
-        }
-
         .verse-reference {
             font-size: 1.4rem;
             text-align: right;
@@ -98,6 +80,16 @@
             margin-top: 20px;
             padding-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .verse-body {
+            font-family: 'Merriweather', serif;
+            font-size: 1.8rem;
+            line-height: 1.6;
+            text-align: left;
+            margin-bottom: 15px;
+            white-space: pre-line;
+            word-wrap: break-word;
         }
 
         @keyframes slideIn {
@@ -144,40 +136,22 @@
         // Función para formatear el contenido del versículo
         function formatVerseContent(content) {
             if (!content) return 'Texto no disponible';
-            
-            // Separar las líneas
-            const lines = content.split('\n');
-            let formattedContent = '';
-            
-            // Procesar cada línea
-            lines.forEach((line, index) => {
-                line = line.trim();
-                
-                if (line) {
-                    // Si la línea parece ser un título (comienza con número o tiene punto al final de una palabra corta)
-                    if (/^\d+\s+[A-Za-záéíóúÁÉÍÓÚñÑ]/.test(line) || 
-                        /^[A-Za-záéíóúÁÉÍÓÚñÑ]{1,20}\.$/.test(line) ||
-                        line.includes('.\n') && line.length < 30) {
-                        // Es un título o subtítulo
-                        formattedContent += `<div class="verse-title">${line}</div>`;
-                    } else {
-                        // Es contenido del versículo
-                        // Eliminar referencias entre corchetes al inicio
-                        line = line.replace(/^\[\d+\]\s*/, '');
-                        // Eliminar múltiples espacios
-                        line = line.replace(/\s+/g, ' ');
-                        
-                        // Si es la primera línea de contenido, no agregar margen extra
-                        if (formattedContent.indexOf('verse-body') === -1) {
-                            formattedContent += `<div class="verse-body">${line}</div>`;
-                        } else {
-                            formattedContent += `<div class="verse-body" style="margin-top: 10px;">${line}</div>`;
-                        }
-                    }
-                }
-            });
-            
-            return formattedContent;
+
+            // Limpiar el contenido
+            let cleanedContent = content.trim();
+
+            // Buscar el primer corchete de cierre ]
+            const closingBracketIndex = cleanedContent.indexOf(']');
+
+            if (closingBracketIndex !== -1) {
+                // Tomar el texto después del corchete de cierre
+                cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
+            }
+
+            // Normalizar espacios múltiples
+            cleanedContent = cleanedContent.replace(/\s+/g, ' ');
+
+            return `<div class="verse-body">${cleanedContent}</div>`;
         }
 
         // Mostrar/ocultar el versículo
@@ -205,10 +179,10 @@
                 }
 
                 const verseData = verseDataArray[0];
-                
+
                 // Formatear el contenido
                 const formattedContent = formatVerseContent(verseData.content);
-                
+
                 // Actualizar el DOM
                 verseText.innerHTML = formattedContent;
                 verseReference.textContent = verseData.reference || 'Referencia no disponible';

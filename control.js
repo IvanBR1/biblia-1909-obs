@@ -7,9 +7,8 @@ const nextVerseBtn = document.getElementById('next-verse');
 const visibilityToggle = document.getElementById('visibility-toggle');
 const historyList = document.getElementById('history-list');
 const previewCurrent = document.getElementById('preview-current');
-const previewPrevious = document.getElementById('preview-previous');
-const previewNext = document.getElementById('preview-next');
-
+const bookSearchInput = document.getElementById('book-search');
+const bookDropdown = document.getElementById('book-dropdown');
 
 // Estado actual
 let currentBook = 'GEN';
@@ -52,29 +51,7 @@ const bookOrder = [
 // Cache para almacenar el número de versículos por capítulo
 const verseCountCache = {};
 
-// Nombre completo de los libros
-const bookNames = {
-    'GEN': 'Génesis', 'EXO': 'Éxodo', 'LEV': 'Levítico', 'NUM': 'Números', 'DEU': 'Deuteronomio',
-    'JOS': 'Josué', 'JDG': 'Jueces', 'RUT': 'Rut', '1SA': '1 Samuel', '2SA': '2 Samuel',
-    '1KI': '1 Reyes', '2KI': '2 Reyes', '1CH': '1 Crónicas', '2CH': '2 Crónicas', 'EZR': 'Esdras',
-    'NEH': 'Nehemías', 'EST': 'Ester', 'JOB': 'Job', 'PSA': 'Salmos', 'PRO': 'Proverbios',
-    'ECC': 'Eclesiastés', 'SNG': 'Cantares', 'ISA': 'Isaías', 'JER': 'Jeremías', 'LAM': 'Lamentaciones',
-    'EZK': 'Ezequiel', 'DAN': 'Daniel', 'HOS': 'Oseas', 'JOL': 'Joel', 'AMO': 'Amós',
-    'OBA': 'Abdías', 'JON': 'Jonás', 'MIC': 'Miqueas', 'NAM': 'Nahúm', 'HAB': 'Habacuc',
-    'ZEP': 'Sofonías', 'HAG': 'Hageo', 'ZEC': 'Zacarías', 'MAL': 'Malaquías', 'MAT': 'San Mateo',
-    'MRK': 'San Marcos', 'LUK': 'San Lucas', 'JHN': 'San Juan', 'ACT': 'Hechos', 'ROM': 'Romanos',
-    '1CO': '1 Corintios', '2CO': '2 Corintios', 'GAL': 'Gálatas', 'EPH': 'Efesios', 'PHP': 'Filipenses',
-    'COL': 'Colosenses', '1TH': '1 Tesalonicenses', '2TH': '2 Tesalonicenses', '1TI': '1 Timoteo',
-    '2TI': '2 Timoteo', 'TIT': 'Tito', 'PHM': 'Filemón', 'HEB': 'Hebreos', 'JAS': 'Santiago',
-    '1PE': '1 Pedro', '2PE': '2 Pedro', '1JN': '1 Juan', '2JN': '2 Juan', '3JN': '3 Juan',
-    'JUD': 'Judas', 'REV': 'Apocalipsis'
-};
-
-// Elementos del DOM adicionales para la búsqueda
-const bookSearchInput = document.getElementById('book-search');
-const bookDropdown = document.getElementById('book-dropdown');
-
-// Datos para la búsqueda
+// Datos de libros para la búsqueda
 const allBooks = [
     { code: 'GEN', name: 'Génesis' },
     { code: 'EXO', name: 'Éxodo' },
@@ -146,9 +123,7 @@ const allBooks = [
 
 // Inicializar select oculto con todas las opciones
 function initializeBookSelect() {
-    const bookSelect = document.getElementById('book-select');
     bookSelect.innerHTML = '';
-
     allBooks.forEach(book => {
         const option = document.createElement('option');
         option.value = book.code;
@@ -160,21 +135,18 @@ function initializeBookSelect() {
 // Función de búsqueda
 function searchBooks(query) {
     query = query.toLowerCase().trim();
-
     if (query === '') {
-        return allBooks.slice(0, 10); // Mostrar solo los primeros 10 cuando no hay búsqueda
+        return allBooks.slice(0, 10);
     }
-
     return allBooks.filter(book => {
         return book.name.toLowerCase().includes(query) ||
             book.code.toLowerCase().includes(query);
-    }).slice(0, 10); // Limitar a 10 resultados
+    }).slice(0, 10);
 }
 
 // Mostrar resultados de búsqueda
 function showSearchResults(results) {
     bookDropdown.innerHTML = '';
-
     if (results.length === 0) {
         const noResults = document.createElement('div');
         noResults.className = 'no-results';
@@ -185,27 +157,20 @@ function showSearchResults(results) {
             const item = document.createElement('div');
             item.className = 'search-dropdown-item';
             if (index === 0) item.classList.add('active');
-
             item.innerHTML = `
                 <strong>${book.name}</strong>
                 <span style="float: right; opacity: 0.7; font-size: 11px;">${book.code}</span>
             `;
-
-            item.addEventListener('click', () => {
-                selectBook(book);
-            });
-
+            item.addEventListener('click', () => selectBook(book));
             item.addEventListener('mouseenter', () => {
                 document.querySelectorAll('.search-dropdown-item').forEach(el => {
                     el.classList.remove('active');
                 });
                 item.classList.add('active');
             });
-
             bookDropdown.appendChild(item);
         });
     }
-
     bookDropdown.classList.add('visible');
 }
 
@@ -214,25 +179,15 @@ function selectBook(book) {
     bookSearchInput.value = book.name;
     bookSelect.value = book.code;
     currentBook = book.code;
-
-    // Ocultar dropdown
     bookDropdown.classList.remove('visible');
-
-    // Resetear capítulo y versículo
     currentChapter = 1;
     currentVerse = 1;
     chapterInput.value = currentChapter;
     verseInput.value = currentVerse;
-
-    // Actualizar UI
     updateButtonStates();
     updatePreview();
     saveState();
-
-    // Disparar evento change
     bookSelect.dispatchEvent(new Event('change'));
-
-    // Si está visible, cargar el nuevo versículo
     if (isVisible) {
         loadAndShowVerse();
     }
@@ -241,17 +196,14 @@ function selectBook(book) {
 // Navegación con teclado en el dropdown
 function handleKeyboardNavigation(e) {
     if (!bookDropdown.classList.contains('visible')) return;
-
     const items = bookDropdown.querySelectorAll('.search-dropdown-item');
     if (items.length === 0) return;
-
     let activeIndex = -1;
     items.forEach((item, index) => {
         if (item.classList.contains('active')) {
             activeIndex = index;
         }
     });
-
     switch (e.key) {
         case 'ArrowDown':
             e.preventDefault();
@@ -261,7 +213,6 @@ function handleKeyboardNavigation(e) {
                 items[activeIndex + 1].scrollIntoView({ block: 'nearest' });
             }
             break;
-
         case 'ArrowUp':
             e.preventDefault();
             if (activeIndex > 0) {
@@ -270,7 +221,6 @@ function handleKeyboardNavigation(e) {
                 items[activeIndex - 1].scrollIntoView({ block: 'nearest' });
             }
             break;
-
         case 'Enter':
             e.preventDefault();
             if (activeIndex >= 0) {
@@ -280,7 +230,6 @@ function handleKeyboardNavigation(e) {
                 if (book) selectBook(book);
             }
             break;
-
         case 'Escape':
             e.preventDefault();
             bookDropdown.classList.remove('visible');
@@ -288,126 +237,30 @@ function handleKeyboardNavigation(e) {
     }
 }
 
-// Actualizar función loadSavedState (AGREGAR al final de la función)
-function loadSavedState() {
-    const savedState = localStorage.getItem('bibleControlState');
-    const savedHistory = localStorage.getItem('bibleSearchHistory');
-
-    if (savedState) {
-        const state = JSON.parse(savedState);
-        currentBook = state.book || 'GEN';
-        currentChapter = state.chapter || 1;
-        currentVerse = state.verse || 1;
-        isVisible = state.visible || false;
-
-        // Actualizar UI con estado guardado
-        bookSelect.value = currentBook;
-        const currentBookData = allBooks.find(b => b.code === currentBook);
-        if (currentBookData) {
-            bookSearchInput.value = currentBookData.name;
-        }
-        chapterInput.value = currentChapter;
-        verseInput.value = currentVerse;
-        visibilityToggle.checked = isVisible;
-
-        // Actualizar vista previa
-        updatePreview();
-        updateButtonStates();
-
-        // Si estaba visible, mostrar el versículo guardado
-        if (isVisible) {
-            loadAndShowVerse();
-        }
-    }
-
-    if (savedHistory) {
-        searchHistory = JSON.parse(savedHistory);
-        renderHistory();
-    }
-}
-
-// Actualizar eventos en DOMContentLoaded (AGREGAR después de los eventos existentes)
-document.addEventListener('DOMContentLoaded', function () {
-    // Inicializar select oculto
-    initializeBookSelect();
-
-    // Cargar estado guardado
-    loadSavedState();
-
-    // Evento para búsqueda de libros
-    bookSearchInput.addEventListener('input', function () {
-        const results = searchBooks(this.value);
-        showSearchResults(results);
-    });
-
-    bookSearchInput.addEventListener('focus', function () {
-        if (this.value === '') {
-            const results = searchBooks('');
-            showSearchResults(results);
-        }
-    });
-
-    bookSearchInput.addEventListener('keydown', handleKeyboardNavigation);
-
-    // Ocultar dropdown al hacer clic fuera
-    document.addEventListener('click', function (e) {
-        if (!bookSearchInput.contains(e.target) && !bookDropdown.contains(e.target)) {
-            bookDropdown.classList.remove('visible');
-        }
-    });
-
-    // También agregar el evento original del select (ahora oculto)
-    bookSelect.addEventListener('change', function () {
-        currentBook = this.value;
-        currentChapter = 1;
-        currentVerse = 1;
-        chapterInput.value = currentChapter;
-        verseInput.value = currentVerse;
-        updateButtonStates();
-        updatePreview();
-        saveState();
-
-        // Actualizar el input de búsqueda
-        const currentBookData = allBooks.find(b => b.code === currentBook);
-        if (currentBookData) {
-            bookSearchInput.value = currentBookData.name;
-        }
-
-        // Si está visible, cargar el nuevo versículo
-        if (isVisible) {
-            loadAndShowVerse();
-        }
-    });
-});
-
 // Cargar estado guardado
 function loadSavedState() {
     const savedState = localStorage.getItem('bibleControlState');
     const savedHistory = localStorage.getItem('bibleSearchHistory');
-
     if (savedState) {
         const state = JSON.parse(savedState);
         currentBook = state.book || 'GEN';
         currentChapter = state.chapter || 1;
         currentVerse = state.verse || 1;
         isVisible = state.visible || false;
-
-        // Actualizar UI con estado guardado
         bookSelect.value = currentBook;
+        const currentBookData = allBooks.find(b => b.code === currentBook);
+        if (currentBookData) {
+            bookSearchInput.value = currentBookData.name;
+        }
         chapterInput.value = currentChapter;
         verseInput.value = currentVerse;
         visibilityToggle.checked = isVisible;
-
-        // Actualizar vista previa
         updatePreview();
         updateButtonStates();
-
-        // Si estaba visible, mostrar el versículo guardado
         if (isVisible) {
             loadAndShowVerse();
         }
     }
-
     if (savedHistory) {
         searchHistory = JSON.parse(savedHistory);
         renderHistory();
@@ -441,21 +294,14 @@ function addToHistory(bookId, chapter, verse, content, reference) {
         reference: reference,
         timestamp: Date.now()
     };
-
-    // Eliminar si ya existe
     const existingIndex = searchHistory.findIndex(item => item.id === historyItem.id);
     if (existingIndex !== -1) {
         searchHistory.splice(existingIndex, 1);
     }
-
-    // Añadir al principio
     searchHistory.unshift(historyItem);
-
-    // Mantener máximo 10 elementos
     if (searchHistory.length > 10) {
         searchHistory.pop();
     }
-
     renderHistory();
     saveHistory();
 }
@@ -463,25 +309,17 @@ function addToHistory(bookId, chapter, verse, content, reference) {
 // Renderizar historial
 function renderHistory() {
     historyList.innerHTML = '';
-
     searchHistory.forEach((item, index) => {
         const li = document.createElement('li');
         li.className = 'history-item';
         if (index === 0) li.classList.add('active');
-
         li.innerHTML = `
             <div class="verse-ref">${item.reference}</div>
             <div class="verse-text">${item.content}</div>
         `;
-
-        li.addEventListener('click', () => {
-            loadFromHistory(item);
-        });
-
+        li.addEventListener('click', () => loadFromHistory(item));
         historyList.appendChild(li);
     });
-
-    // Si no hay historial, mostrar mensaje
     if (searchHistory.length === 0) {
         const li = document.createElement('li');
         li.className = 'history-item';
@@ -495,12 +333,9 @@ function loadFromHistory(item) {
     currentBook = item.book;
     currentChapter = item.chapter;
     currentVerse = item.verse;
-
     bookSelect.value = currentBook;
     chapterInput.value = currentChapter;
     verseInput.value = currentVerse;
-
-    // Mover al principio del historial
     const existingIndex = searchHistory.findIndex(h => h.id === item.id);
     if (existingIndex !== -1) {
         const [removed] = searchHistory.splice(existingIndex, 1);
@@ -508,12 +343,9 @@ function loadFromHistory(item) {
         renderHistory();
         saveHistory();
     }
-
     updatePreview();
     updateButtonStates();
     saveState();
-
-    // Si está visible, mostrar el versículo
     if (isVisible) {
         loadAndShowVerse();
     }
@@ -522,67 +354,52 @@ function loadFromHistory(item) {
 // Obtener el número de versículos de un capítulo
 async function getVerseCount(bookId, chapterNumber) {
     const cacheKey = `${bookId}-${chapterNumber}`;
-
-    // Si ya tenemos el conteo en caché, devolverlo
     if (verseCountCache[cacheKey]) {
         return verseCountCache[cacheKey];
     }
-
     try {
-        // Hacer una petición para obtener los versículos del capítulo
         const response = await fetch(`https://biblia-api.qhar.in/book/${bookId}/chapter/${chapterNumber}/verse`);
-
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
-
         const versesData = await response.json();
         const verseCount = versesData.length;
-
-        // Guardar en caché
         verseCountCache[cacheKey] = verseCount;
-
         return verseCount;
     } catch (error) {
         console.error('Error al obtener el número de versículos:', error);
-        // Si hay error, asumimos un número conservador
         return 30;
     }
 }
 
 // Actualizar estado de los botones de navegación
 async function updateButtonStates() {
-    // Verificar si estamos en el primer versículo del primer capítulo del primer libro
     const isFirstBook = currentBook === 'GEN';
     const isFirstChapter = currentChapter === 1;
     const isFirstVerse = currentVerse === 1;
-
-    // Verificar si estamos en el último versículo del último capítulo del último libro
     const isLastBook = currentBook === 'REV';
     const isLastChapter = currentChapter === bookChapters['REV'];
-
-    // Obtener el número de versículos del capítulo actual
     const verseCount = await getVerseCount(currentBook, currentChapter);
     const isLastVerse = currentVerse === verseCount;
-
-    // Deshabilitar botón anterior si estamos al inicio
     prevVerseBtn.disabled = isFirstBook && isFirstChapter && isFirstVerse;
-
-    // Deshabilitar botón siguiente si estamos al final
     nextVerseBtn.disabled = isLastBook && isLastChapter && isLastVerse;
 }
 
 // Actualizar vista previa
-// Actualizar vista previa (solo versículo actual)
 async function updatePreview() {
-    // Obtener versículo actual
     try {
         const response = await fetch(`https://biblia-api.qhar.in/book/${currentBook}/chapter/${currentChapter}/verse/${currentVerse}`);
         if (response.ok) {
             const verseData = await response.json();
             if (verseData && verseData.length > 0) {
-                const cleanContent = verseData[0].content.replace(/^\[\d+\]\s*/, '');
-                previewCurrent.querySelector('.verse-text').textContent = cleanContent;
+                let cleanedContent = verseData[0].content.trim();
+                const closingBracketIndex = cleanedContent.indexOf(']');
+                if (closingBracketIndex !== -1) {
+                    cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
+                }
+                cleanedContent = cleanedContent.replace(/\s+/g, ' ');
+                const previewText = cleanedContent.substring(0, 100) + (cleanedContent.length > 100 ? '...' : '');
+                previewCurrent.querySelector('.verse-text').textContent = previewText;
                 previewCurrent.querySelector('.verse-ref').textContent = `Actual: ${verseData[0].reference}`;
             }
         }
@@ -593,17 +410,155 @@ async function updatePreview() {
     }
 }
 
+// Función para enviar comandos al visualizador
+function sendCommand(command) {
+    localStorage.setItem('bibleVerseCommand', JSON.stringify(command));
+    window.dispatchEvent(new Event('storage'));
+}
+
+// Navegar al versículo anterior
+async function goToPreviousVerse() {
+    if (currentVerse > 1) {
+        currentVerse--;
+    } else if (currentChapter > 1) {
+        currentChapter--;
+        const verseCount = await getVerseCount(currentBook, currentChapter);
+        currentVerse = verseCount;
+    } else {
+        const currentBookIndex = bookOrder.indexOf(currentBook);
+        if (currentBookIndex > 0) {
+            currentBook = bookOrder[currentBookIndex - 1];
+            bookSelect.value = currentBook;
+            currentChapter = bookChapters[currentBook];
+            const verseCount = await getVerseCount(currentBook, currentChapter);
+            currentVerse = verseCount;
+        }
+    }
+    chapterInput.value = currentChapter;
+    verseInput.value = currentVerse;
+    updateButtonStates();
+    updatePreview();
+    saveState();
+    if (isVisible) {
+        loadAndShowVerse();
+    }
+}
+
+// Navegar al versículo siguiente
+async function goToNextVerse() {
+    const verseCount = await getVerseCount(currentBook, currentChapter);
+    if (currentVerse < verseCount) {
+        currentVerse++;
+    } else if (currentChapter < bookChapters[currentBook]) {
+        currentChapter++;
+        currentVerse = 1;
+    } else {
+        const currentBookIndex = bookOrder.indexOf(currentBook);
+        if (currentBookIndex < bookOrder.length - 1) {
+            currentBook = bookOrder[currentBookIndex + 1];
+            bookSelect.value = currentBook;
+            currentChapter = 1;
+            currentVerse = 1;
+        }
+    }
+    chapterInput.value = currentChapter;
+    verseInput.value = currentVerse;
+    updateButtonStates();
+    updatePreview();
+    saveState();
+    if (isVisible) {
+        loadAndShowVerse();
+    }
+}
+
+// Formatear contenido del versículo
+function formatVerseContent(content) {
+    if (!content) return 'Texto no disponible';
+    let cleanedContent = content.trim();
+    const closingBracketIndex = cleanedContent.indexOf(']');
+    if (closingBracketIndex !== -1) {
+        cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
+    }
+    cleanedContent = cleanedContent.replace(/\s+/g, ' ');
+    return `<div style="font-size: 1.8rem; line-height: 1.6; text-align: left; font-family: 'Merriweather', serif;">${cleanedContent}</div>`;
+}
+
+// Cargar y mostrar el versículo actual
+async function loadAndShowVerse() {
+    const bookId = bookSelect.value || currentBook;
+    const chapterNumber = chapterInput.value || currentChapter;
+    const verseNumber = verseInput.value || currentVerse;
+    if (!bookId || !chapterNumber || !verseNumber) {
+        return;
+    }
+    try {
+        const response = await fetch(`https://biblia-api.qhar.in/book/${bookId}/chapter/${chapterNumber}/verse/${verseNumber}`);
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        const verseData = await response.json();
+        if (!verseData || verseData.length === 0) {
+            throw new Error('No se encontró el versículo');
+        }
+        const cleanContent = formatVerseContent(verseData[0].content);
+        sendCommand({
+            action: 'load',
+            book: bookId,
+            chapter: chapterNumber,
+            verse: verseNumber,
+            content: cleanContent,
+            reference: verseData[0].reference,
+            show: true
+        });
+        currentBook = bookId;
+        currentChapter = parseInt(chapterNumber);
+        currentVerse = parseInt(verseNumber);
+        addToHistory(bookId, chapterNumber, verseNumber, cleanContent.replace(/<[^>]*>/g, ''), verseData[0].reference);
+        updatePreview();
+        saveState();
+    } catch (error) {
+        console.error('Error al cargar el versículo:', error);
+    }
+}
+
+// Alternar visibilidad
+function toggleVisibility() {
+    isVisible = visibilityToggle.checked;
+    if (isVisible) {
+        loadAndShowVerse();
+    } else {
+        sendCommand({ action: 'hide' });
+    }
+    saveState();
+}
+
 // Configurar event listeners
 document.addEventListener('DOMContentLoaded', function () {
-    // Cargar estado guardado
+    initializeBookSelect();
     loadSavedState();
-
-    // Configurar eventos
     prevVerseBtn.addEventListener('click', goToPreviousVerse);
     nextVerseBtn.addEventListener('click', goToNextVerse);
     visibilityToggle.addEventListener('change', toggleVisibility);
 
-    // Eventos para guardar cambios en los campos
+    // Eventos para búsqueda de libros
+    bookSearchInput.addEventListener('input', function () {
+        const results = searchBooks(this.value);
+        showSearchResults(results);
+    });
+    bookSearchInput.addEventListener('focus', function () {
+        if (this.value === '') {
+            const results = searchBooks('');
+            showSearchResults(results);
+        }
+    });
+    bookSearchInput.addEventListener('keydown', handleKeyboardNavigation);
+    document.addEventListener('click', function (e) {
+        if (!bookSearchInput.contains(e.target) && !bookDropdown.contains(e.target)) {
+            bookDropdown.classList.remove('visible');
+        }
+    });
+
+    // Eventos para cambios en select e inputs
     bookSelect.addEventListener('change', function () {
         currentBook = this.value;
         currentChapter = 1;
@@ -613,8 +568,10 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButtonStates();
         updatePreview();
         saveState();
-
-        // Si está visible, cargar el nuevo versículo
+        const currentBookData = allBooks.find(b => b.code === currentBook);
+        if (currentBookData) {
+            bookSearchInput.value = currentBookData.name;
+        }
         if (isVisible) {
             loadAndShowVerse();
         }
@@ -627,8 +584,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButtonStates();
         updatePreview();
         saveState();
-
-        // Si está visible, cargar el nuevo versículo
         if (isVisible) {
             loadAndShowVerse();
         }
@@ -639,189 +594,8 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButtonStates();
         updatePreview();
         saveState();
-
-        // Si está visible, cargar el nuevo versículo
         if (isVisible) {
             loadAndShowVerse();
         }
     });
 });
-
-// Función para enviar comandos al visualizador
-function sendCommand(command) {
-    // Guardar en localStorage para que el visualizador lo detecte
-    localStorage.setItem('bibleVerseCommand', JSON.stringify(command));
-    // Disparar un evento de storage para que el visualizador reaccione inmediatamente
-    window.dispatchEvent(new Event('storage'));
-}
-
-// Navegar al versículo anterior
-async function goToPreviousVerse() {
-    if (currentVerse > 1) {
-        // Versículo anterior en el mismo capítulo
-        currentVerse--;
-    } else if (currentChapter > 1) {
-        // Último versículo del capítulo anterior
-        currentChapter--;
-        const verseCount = await getVerseCount(currentBook, currentChapter);
-        currentVerse = verseCount;
-    } else {
-        // Último versículo del último capítulo del libro anterior
-        const currentBookIndex = bookOrder.indexOf(currentBook);
-        if (currentBookIndex > 0) {
-            currentBook = bookOrder[currentBookIndex - 1];
-            bookSelect.value = currentBook;
-            currentChapter = bookChapters[currentBook];
-            const verseCount = await getVerseCount(currentBook, currentChapter);
-            currentVerse = verseCount;
-        }
-    }
-
-    // Actualizar UI
-    chapterInput.value = currentChapter;
-    verseInput.value = currentVerse;
-    updateButtonStates();
-    updatePreview();
-    saveState();
-
-    // Cargar y mostrar el versículo
-    if (isVisible) {
-        loadAndShowVerse();
-    }
-}
-
-// Navegar al versículo siguiente
-async function goToNextVerse() {
-    const verseCount = await getVerseCount(currentBook, currentChapter);
-
-    if (currentVerse < verseCount) {
-        // Siguiente versículo en el mismo capítulo
-        currentVerse++;
-    } else if (currentChapter < bookChapters[currentBook]) {
-        // Primer versículo del siguiente capítulo
-        currentChapter++;
-        currentVerse = 1;
-    } else {
-        // Primer versículo del primer capítulo del siguiente libro
-        const currentBookIndex = bookOrder.indexOf(currentBook);
-        if (currentBookIndex < bookOrder.length - 1) {
-            currentBook = bookOrder[currentBookIndex + 1];
-            bookSelect.value = currentBook;
-            currentChapter = 1;
-            currentVerse = 1;
-        }
-    }
-
-    // Actualizar UI
-    chapterInput.value = currentChapter;
-    verseInput.value = currentVerse;
-    updateButtonStates();
-    updatePreview();
-    saveState();
-
-    // Cargar y mostrar el versículo
-    if (isVisible) {
-        loadAndShowVerse();
-    }
-}
-
-// Cargar y mostrar el versículo actual
-// Cargar y mostrar el versículo actual
-async function loadAndShowVerse() {
-    const bookId = bookSelect.value || currentBook;
-    const chapterNumber = chapterInput.value || currentChapter;
-    const verseNumber = verseInput.value || currentVerse;
-
-    if (!bookId || !chapterNumber || !verseNumber) {
-        return;
-    }
-
-    try {
-        // Hacer la petición a la API
-        const response = await fetch(`https://biblia-api.qhar.in/book/${bookId}/chapter/${chapterNumber}/verse/${verseNumber}`);
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const verseData = await response.json();
-
-        if (!verseData || verseData.length === 0) {
-            throw new Error('No se encontró el versículo');
-        }
-
-        // Función para formatear contenido (similar a la del visualizador)
-        function formatVerseContent(content) {
-            if (!content) return 'Texto no disponible';
-            
-            const lines = content.split('\n');
-            let formattedContent = '';
-            
-            lines.forEach((line, index) => {
-                line = line.trim();
-                
-                if (line) {
-                    if (/^\d+\s+[A-Za-záéíóúÁÉÍÓÚñÑ]/.test(line) || 
-                        /^[A-Za-záéíóúÁÉÍÓÚñÑ]{1,20}\.$/.test(line) ||
-                        line.includes('.\n') && line.length < 30) {
-                        formattedContent += `<div style="font-size: 1.2rem; color: #4f8ff0; margin-bottom: 5px; font-weight: 600;">${line}</div>`;
-                    } else {
-                        line = line.replace(/^\[\d+\]\s*/, '');
-                        line = line.replace(/\s+/g, ' ');
-                        
-                        if (formattedContent.indexOf('style="font-size: 1.8rem"') === -1) {
-                            formattedContent += `<div style="font-size: 1.8rem; line-height: 1.6;">${line}</div>`;
-                        } else {
-                            formattedContent += `<div style="font-size: 1.8rem; line-height: 1.6; margin-top: 10px;">${line}</div>`;
-                        }
-                    }
-                }
-            });
-            
-            return formattedContent;
-        }
-
-        const cleanContent = formatVerseContent(verseData[0].content);
-        
-        // Enviar comando para cargar el versículo
-        sendCommand({
-            action: 'load',
-            book: bookId,
-            chapter: chapterNumber,
-            verse: verseNumber,
-            content: cleanContent,
-            reference: verseData[0].reference,
-            show: true
-        });
-
-        // Actualizar estado actual
-        currentBook = bookId;
-        currentChapter = parseInt(chapterNumber);
-        currentVerse = parseInt(verseNumber);
-
-        // Añadir al historial (solo cuando se muestra, no cuando se navega con siguiente/anterior)
-        addToHistory(bookId, chapterNumber, verseNumber, cleanContent.replace(/<[^>]*>/g, ''), verseData[0].reference);
-        
-        // Actualizar vista previa
-        updatePreview();
-        saveState();
-
-    } catch (error) {
-        console.error('Error al cargar el versículo:', error);
-    }
-}
-
-// Alternar visibilidad
-function toggleVisibility() {
-    isVisible = visibilityToggle.checked;
-
-    if (isVisible) {
-        // Si se activa, cargar y mostrar el versículo actual
-        loadAndShowVerse();
-    } else {
-        // Si se desactiva, ocultar el versículo
-        sendCommand({ action: 'hide' });
-    }
-
-    saveState();
-}
