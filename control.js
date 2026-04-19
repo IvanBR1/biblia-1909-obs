@@ -392,14 +392,13 @@ async function updatePreview() {
         if (response.ok) {
             const verseData = await response.json();
             if (verseData && verseData.length > 0) {
-                let cleanedContent = verseData[0].content.trim();
+                let cleanedContent = verseData[0].content;
                 const closingBracketIndex = cleanedContent.indexOf(']');
                 if (closingBracketIndex !== -1) {
-                    cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
+                    cleanedContent = cleanedContent.substring(closingBracketIndex + 1);
                 }
                 cleanedContent = cleanedContent.replace(/\s+/g, ' ');
-                const previewText = cleanedContent.substring(0, 100) + (cleanedContent.length > 100 ? '...' : '');
-                previewCurrent.querySelector('.verse-text').textContent = previewText;
+                previewCurrent.querySelector('.verse-text').textContent = cleanedContent;
                 previewCurrent.querySelector('.verse-ref').textContent = `Actual: ${verseData[0].reference}`;
             }
         }
