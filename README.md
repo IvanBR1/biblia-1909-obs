@@ -1,291 +1,133 @@
-# Visualizador de la Biblia para OBS
+# Visualizador de Biblia para OBS
 
-## 📖 Descripción
-Un visualizador elegante y funcional de versículos bíblicos diseñado específicamente para su uso en **OBS (Open Broadcaster Software)**. Ideal para transmisiones en vivo, cultos en línea o estudios bíblicos.
+Visualizador local de versículos bíblicos para OBS, pensado para cultos, transmisiones en vivo, estudios bíblicos y presentaciones. El panel de control permite buscar un pasaje, previsualizarlo, ver el siguiente versículo y enviarlo a una fuente de navegador en OBS.
 
-Permite mostrar versículos de la **Biblia Reina Valera 1909** con un diseño profesional y controles en tiempo real.
+El proyecto usa la Biblia Reina Valera 1909 desde una API pública y se comunica entre el panel y el visualizador mediante `localStorage`.
 
----
+## Características
 
-## ✨ Características Principales
+- Panel de control local para seleccionar libro, capítulo y versículo.
+- Buscador de libros siempre visible.
+- Secciones desplegables para navegación, tema, vista previa e historial.
+- Vista previa del versículo actual y del siguiente versículo.
+- Navegación anterior/siguiente entre capítulos y libros.
+- Historial de los últimos 10 versículos usados.
+- Mostrar/Ocultar en tiempo real para OBS.
+- Temas HTML independientes para usar como fuente de navegador.
+- Tema con fondo de Biblia en pantalla completa y texto ajustable horizontal/verticalmente.
 
-- **Interfaz dual**: Panel de control + visualizador para OBS
-- **Conexión en tiempo real**: Comunicación vía `localStorage` entre paneles
-- **Navegación completa**: Libros, capítulos y versículos
-- **Historial inteligente**: Guarda los últimos 10 versículos consultados
-- **Búsqueda de libros**: Filtro en tiempo real
-- **Persistencia de estado**: Recuerda la última configuración
-- **Diseño responsive**: Adaptable a distintas resoluciones
-- **Animaciones suaves**: Transiciones elegantes al mostrar u ocultar
-
----
-
-## 📁 Estructura de Archivos
+## Archivos principales
 
 ```text
-📂 visualizador-biblia-obs/
-├── 📄 bible-display.html      # Visualizador principal (para OBS)
-├── 📄 control-panel.html      # Panel de control
-├── 📄 control.js              # Lógica del panel de control
-├── 📄 style.css               # Estilos del panel de control
-└── 📄 README.md               # Documentación
+biblia-obs-1909/
+├── bible-display-theme1.html   # Tema clásico / visualizador base
+├── bible-display-theme2.html   # Tema con imagen de fondo y texto tipo libro
+├── control-panel.html          # Panel de control
+├── control.js                  # Lógica del panel
+├── style.css                   # Estilos del panel
+├── src/img/biblia_bg_1.png     # Fondo usado por el tema 2
+└── README.md
 ```
 
----
+> Nota: `bible-display.html` ya no se usa. El código base del visualizador está en `bible-display-theme1.html`.
 
-## 🔧 Dependencias Externas
+## Uso rápido
 
-- **Biblia API (Reina Valera 1909)**  
-  https://biblia-api.qhar.in/
-
-- **Google Fonts**  
-  Merriweather · Open Sans
-
-- **Font Awesome**  
-  Versión 6.4.0 (iconos)
-
-- **OBS Studio**  
-  Versión 28.0 o superior (recomendado)
-
----
-
-## 🚀 Instalación Rápida
-
-### 1. Descargar los archivos
-
-```bash
-git clone https://github.com/tu-usuario/visualizador-biblia-obs.git
-```
-
-O descarga manualmente los archivos principales.
-
-### 2. Abrir el Panel de Control
-
-- Abre `control-panel.html` en tu navegador
-- No requiere servidor web
-- Funciona completamente de forma local
-
-### 3. Configurar en OBS
-
-- Añade una fuente **Navegador (Browser Source)**
-- Usa la ruta local del archivo `bible-display.html`
-- Tamaño recomendado: **1920x1080**
-
----
-
-## ⚙️ Configuración en OBS
-
-### Paso 1: Añadir el Visualizador
-
-1. En OBS, haz clic en **+** (Fuentes)
-2. Selecciona **Navegador**
-3. Nombre: `Biblia Visualizador`
-
-**Configuración recomendada:**
-
-- URL:  
-  `file:///C:/Users/TuUsuario/visualizador-biblia-obs/bible-display.html`
-- Ancho: `1920`
-- Alto: `1080`
-- FPS: `30–60`
-
-### Paso 2: Añadir el Panel de Control (Opcional)
-
-- Añade otra fuente **Navegador**
-- Usa la ruta a `control-panel.html`
-- Tamaño sugerido: `500x700`
-- Ubícalo donde sea más cómodo
-
----
-
-## 🎮 Uso del Sistema
-
-### Interfaz del Panel de Control
+1. Abre `control-panel.html` en tu navegador.
+2. En OBS, añade una fuente **Navegador**.
+3. Usa uno de estos archivos como URL local:
 
 ```text
-┌─────────────────────────────┐
-│ 🎛️ CONTROLES                │
-│ • Libro: [Búsqueda] ▼       │
-│ • Capítulo: [1]             │
-│ • Versículo: [1]            │
-│ • ◄ | ►                     │
-│ • Mostrar/Ocultar [ ]       │
-├─────────────────────────────┤
-│ 👁️ VISTA PREVIA             │
-│ [Versículo actual]          │
-├─────────────────────────────┤
-│ 📜 HISTORIAL (últimos 10)   │
-│ • Génesis 1:1               │
-│ • Juan 3:16                 │
-└─────────────────────────────┘
+file:///D:/Documents/biblia-obs-1909/bible-display-theme1.html
+file:///D:/Documents/biblia-obs-1909/bible-display-theme2.html
 ```
 
-### Funcionalidades
+4. Configura la fuente en OBS con tamaño recomendado `1920x1080`.
+5. Desde el panel, busca el libro, elige capítulo y versículo, y activa **Mostrar/Ocultar**.
 
-#### 📌 Seleccionar Versículo
-- Busca el libro escribiendo su nombre
-- Navega con flechas o introduce valores manualmente
+## Panel de control
 
-#### 👁️ Mostrar / Ocultar
-- Interruptor para controlar visibilidad en OBS
-- Animaciones suaves de entrada y salida
+El buscador de libros queda siempre visible. Las demás áreas se pueden abrir o cerrar:
 
-#### 🔀 Navegación
-- Versículo anterior / siguiente
-- Navegación automática entre capítulos y libros
+- **Navegación**: capítulo, versículo, botón anterior y botón siguiente.
+- **Tema**: posición horizontal, posición vertical y fondo del tema.
+- **Vista previa**: muestra el versículo actual y el siguiente.
+- **Historial**: lista los últimos 10 versículos cargados.
 
-#### 📜 Historial
-- Hasta 10 versículos
-- Haz clic para recargar cualquiera
+## Tema 1
 
----
+`bible-display-theme1.html` contiene el visualizador clásico. Mantiene el formato actual de:
 
-## 🔌 API y Dependencia Externa
+- Texto del versículo.
+- Cita bíblica.
+- Libro/capítulo/versículo según lo entrega la API.
 
-Este proyecto depende de una API mantenida por **jh0rman**.
+## Tema 2
 
-- Repositorio: `github.com/jh0rman/biblia-api`
-- Versión: **Reina Valera 1909**
-- Estado: Activo
-- Última actualización conocida: **Enero 2026**
+`bible-display-theme2.html` usa la imagen `src/img/biblia_bg_1.png` como fondo de pantalla completa. El texto aparece centrado en la parte superior por defecto, con una transición suave para el fondo y el versículo.
 
-### Endpoints Utilizados
+Desde el panel puedes ajustar:
 
-```javascript
-// Obtener versículo específico
-GET https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse/{verseNumber}
+- Posición horizontal del texto.
+- Posición vertical del texto.
+- Activar o desactivar el fondo.
 
-// Obtener todos los versículos de un capítulo
-GET https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse
+## API usada
+
+El proyecto consulta:
+
+```text
+https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse/{verseNumber}
+https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse
 ```
 
-### ⚠️ Nota Importante
+La API es externa al proyecto. Si no carga un versículo, revisa tu conexión a internet y la disponibilidad del servicio.
 
-La API es mantenida por un tercero. Si hay problemas:
+## Compatibilidad
 
-- Verifica el estado del repositorio
-- Los endpoints podrían cambiar
-- Considera implementar caché local para producción
+- OBS Studio con fuente de navegador.
+- Chrome, Edge o navegador basado en Chromium recomendado para el panel.
+- Funciona como archivos locales; no requiere servidor web.
 
----
+## Personalización
 
-## 🎨 Personalización
+Para modificar el panel edita `style.css`.
 
-### Colores (Variables CSS)
+Para cambiar el aspecto en OBS edita:
+
+- `bible-display-theme1.html`
+- `bible-display-theme2.html`
+
+En el tema 2, las variables principales están al inicio del CSS:
 
 ```css
 :root {
-  --primary-color: #2c3e50;
-  --secondary-color: #3498db;
-  --accent-color: #e74c3c;
-  --light-color: #ecf0f1;
-  --dark-color: #2c3e50;
+  --verse-x: 50%;
+  --verse-y: 16%;
+  --verse-width: min(86vw, 1180px);
 }
 ```
 
-Archivos a editar:
-- `bible-display.html`
-- `style.css`
+## Problemas comunes
 
-### Tamaños de Fuente
+### No se muestra el versículo en OBS
 
-```css
-.verse-body {
-  font-size: 1.8rem;
-}
+- Confirma que el panel y el tema estén abiertos desde la misma carpeta local.
+- Verifica que la fuente de navegador apunte a `bible-display-theme1.html` o `bible-display-theme2.html`.
+- Revisa que JavaScript y `localStorage` estén habilitados.
 
-.verse-reference {
-  font-size: 1.4rem;
-}
-```
+### La vista previa no carga
 
----
+- Verifica conexión a internet.
+- Revisa si la API está respondiendo.
 
-## 🐛 Problemas Conocidos y Soluciones
+### El fondo del tema 2 no aparece
 
-### ❌ El versículo no se muestra en OBS
+- Confirma que exista `src/img/biblia_bg_1.png`.
+- Revisa que el interruptor **Fondo del tema** esté activado.
 
-- Verifica que ambos HTML estén en la misma carpeta
-- Confirma permisos de archivos locales en OBS
-- Revisa la consola del navegador (F12)
+## Estado
 
-### ❌ La API no responde
+Versión local: 1.1.0
 
-- Verifica conexión a internet
-- Revisa el repositorio de la API
-- Implementa manejo de errores y timeout
-
-### ❌ Los controles no funcionan
-
-- Abre `control-panel.html` en el mismo navegador
-- Verifica que JavaScript esté habilitado
-- Revisa bloqueadores de `localStorage`
-
----
-
-## 📱 Compatibilidad
-
-- **Navegadores**: Chrome 90+, Firefox 88+, Edge 90+
-- **OBS**: 28.0+
-- **Sistemas Operativos**:
-  - Windows 10+
-  - macOS 10.15+
-  - Linux (con OBS)
-
----
-
-## 🔄 Actualizaciones Futuras
-
-- Soporte para múltiples traducciones
-- Temas y colores configurables desde el panel
-- Favoritos / marcadores
-
----
-
-## 🤝 Contribución
-
-1. Haz fork del repositorio
-2. Crea una rama
-   ```bash
-   git checkout -b feature/AmazingFeature
-   ```
-3. Commit de cambios
-   ```bash
-   git commit -m "Add some AmazingFeature"
-   ```
-4. Push a la rama
-   ```bash
-   git push origin feature/AmazingFeature
-   ```
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto se distribuye bajo la **Licencia MIT**.  
-Consulta el archivo `LICENSE` para más información.
-
----
-
-## ⚠️ Aviso Legal
-
-Este software utiliza la Biblia **Reina Valera 1909**, texto de dominio público, obtenida mediante una API pública.
-
-Este proyecto **no está afiliado oficialmente** con los mantenedores de la API.
-
----
-
-## 🆘 Soporte
-
-- Revisa la sección de problemas conocidos
-- Consulta cambios en la API
-- Abre un issue en el repositorio del proyecto
-
-> **Nota:** Para entornos de producción crítica, se recomienda implementar un sistema de caché o respaldo local.
-
----
-
-**Versión:** 1.0.0  
-**Última actualización:** Enero 2026
-
+Última actualización: junio de 2026

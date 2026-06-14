@@ -12,7 +12,6 @@
 
 <body>
     <div class="main-container">
-        <!-- Panel de controles -->
         <div class="control-panel">
             <h3><i class="fas fa-sliders-h"></i> Controles</h3>
             <div class="form-container">
@@ -25,33 +24,65 @@
                             <span class="search-icon"><i class="fas fa-search"></i></span>
                             <div id="book-dropdown" class="search-dropdown"></div>
                         </div>
-                        <select id="book-select" style="display: none;">
-                            <!-- Las opciones se generarán dinámicamente -->
-                        </select>
+                        <select id="book-select" style="display: none;"></select>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <div class="number-inputs">
-                        <div>
-                            <label for="chapter-input"><i class="fas fa-list-ol"></i> Capítulo</label>
-                            <input type="number" id="chapter-input" min="1" value="1" placeholder="Cap.">
+                <section class="collapsible-section open">
+                    <button class="section-toggle" type="button" aria-expanded="true">
+                        <span><i class="fas fa-location-arrow"></i> Navegación</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <div class="number-inputs">
+                                <div>
+                                    <label for="chapter-input"><i class="fas fa-list-ol"></i> Capítulo</label>
+                                    <input type="number" id="chapter-input" min="1" value="1" placeholder="Cap.">
+                                </div>
+                                <div>
+                                    <label for="verse-input"><i class="fas fa-verse"></i> Versículo</label>
+                                    <input type="number" id="verse-input" min="1" value="1" placeholder="Vs.">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label for="verse-input"><i class="fas fa-verse"></i> Versículo</label>
-                            <input type="number" id="verse-input" min="1" value="1" placeholder="Vs.">
+
+                        <div class="controls">
+                            <button id="prev-verse" class="btn btn-primary" title="Versículo anterior">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button id="next-verse" class="btn btn-primary" title="Versículo siguiente">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="controls">
-                    <button id="prev-verse" class="btn btn-primary" title="Versículo anterior">
-                        <i class="fas fa-arrow-left"></i>
+                <section class="collapsible-section open">
+                    <button class="section-toggle" type="button" aria-expanded="true">
+                        <span><i class="fas fa-palette"></i> Tema</span>
+                        <i class="fas fa-chevron-down"></i>
                     </button>
-                    <button id="next-verse" class="btn btn-primary" title="Versículo siguiente">
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
+                    <div class="section-body">
+                        <div class="theme-controls">
+                            <div class="range-control">
+                                <label for="text-x"><i class="fas fa-arrows-left-right"></i> Posición horizontal</label>
+                                <input type="range" id="text-x" min="5" max="95" value="50">
+                            </div>
+                            <div class="range-control">
+                                <label for="text-y"><i class="fas fa-arrows-up-down"></i> Posición vertical</label>
+                                <input type="range" id="text-y" min="5" max="70" value="16">
+                            </div>
+                            <div class="switch-container compact">
+                                <span class="switch-label">Fondo del tema</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="background-toggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 <div class="switch-container">
                     <span class="switch-label">Mostrar/Ocultar</span>
@@ -63,25 +94,33 @@
             </div>
         </div>
 
-        <!-- Panel de vista previa (solo actual) -->
-        <div class="preview-panel">
-            <h3><i class="fas fa-eye"></i> Vista Previa</h3>
-            <div class="preview-content">
+        <div class="preview-panel collapsible-section open">
+            <button class="section-toggle panel-toggle" type="button" aria-expanded="true">
+                <span><i class="fas fa-eye"></i> Vista previa</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="preview-content section-body">
                 <div id="preview-current" class="preview-verse current">
                     <div class="verse-header">
                         <span class="verse-ref">Actual</span>
                     </div>
                     <div class="verse-text">Seleccione un versículo</div>
                 </div>
+                <div id="preview-next" class="preview-verse next">
+                    <div class="verse-header">
+                        <span class="verse-ref">Siguiente</span>
+                    </div>
+                    <div class="verse-text">Seleccione un versículo</div>
+                </div>
             </div>
         </div>
 
-        <!-- Panel de historial -->
-        <div class="history-panel">
-            <h3><i class="fas fa-history"></i> Historial (últimos 10)</h3>
-            <ul id="history-list" class="history-list">
-                <!-- Historial se llenará dinámicamente -->
-            </ul>
+        <div class="history-panel collapsible-section open">
+            <button class="section-toggle panel-toggle" type="button" aria-expanded="true">
+                <span><i class="fas fa-history"></i> Historial (últimos 10)</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <ul id="history-list" class="history-list section-body"></ul>
         </div>
     </div>
 

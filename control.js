@@ -7,14 +7,23 @@ const nextVerseBtn = document.getElementById('next-verse');
 const visibilityToggle = document.getElementById('visibility-toggle');
 const historyList = document.getElementById('history-list');
 const previewCurrent = document.getElementById('preview-current');
+const previewNext = document.getElementById('preview-next');
 const bookSearchInput = document.getElementById('book-search');
 const bookDropdown = document.getElementById('book-dropdown');
+const textXInput = document.getElementById('text-x');
+const textYInput = document.getElementById('text-y');
+const backgroundToggle = document.getElementById('background-toggle');
 
 // Estado actual
 let currentBook = 'GEN';
 let currentChapter = 1;
 let currentVerse = 1;
 let isVisible = false;
+let themeSettings = {
+    textX: 50,
+    textY: 16,
+    backgroundVisible: true
+};
 
 // Historial de búsquedas (máximo 10)
 let searchHistory = [];
@@ -247,6 +256,11 @@ function loadSavedState() {
         currentChapter = state.chapter || 1;
         currentVerse = state.verse || 1;
         isVisible = state.visible || false;
+        themeSettings = {
+            textX: state.textX || 50,
+            textY: state.textY || 16,
+            backgroundVisible: state.backgroundVisible !== false
+        };
         bookSelect.value = currentBook;
         const currentBookData = allBooks.find(b => b.code === currentBook);
         if (currentBookData) {
@@ -255,8 +269,12 @@ function loadSavedState() {
         chapterInput.value = currentChapter;
         verseInput.value = currentVerse;
         visibilityToggle.checked = isVisible;
+        textXInput.value = themeSettings.textX;
+        textYInput.value = themeSettings.textY;
+        backgroundToggle.checked = themeSettings.backgroundVisible;
         updatePreview();
         updateButtonStates();
+        sendThemeSettings();
         if (isVisible) {
             loadAndShowVerse();
         }
@@ -273,7 +291,10 @@ function saveState() {
         book: currentBook,
         chapter: currentChapter,
         verse: currentVerse,
-        visible: isVisible
+        visible: isVisible,
+        textX: themeSettings.textX,
+        textY: themeSettings.textY,
+        backgroundVisible: themeSettings.backgroundVisible
     };
     localStorage.setItem('bibleControlState', JSON.stringify(state));
 }
@@ -385,27 +406,76 @@ async function updateButtonStates() {
     nextVerseBtn.disabled = isLastBook && isLastChapter && isLastVerse;
 }
 
+function cleanVerseText(content) {
+    if (!content) return 'Texto no disponible';
+    let cleanedContent = content.trim();
+    const closingBracketIndex = cleanedContent.indexOf(']');
+    if (closingBracketIndex !== -1) {
+        cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
+    }
+    return cleanedContent.replace(/\s+/g, ' ');
+}
+
+async function getNextVerseLocation(bookId, chapterNumber, verseNumber) {
+    const chapter = parseInt(chapterNumber, 10);
+    const verse = parseInt(verseNumber, 10);
+    const verseCount = await getVerseCount(bookId, chapter);
+
+    if (verse < verseCount) {
+        return { book: bookId, chapter, verse: verse + 1 };
+    }
+
+    if (chapter < bookChapters[bookId]) {
+        return { book: bookId, chapter: chapter + 1, verse: 1 };
+    }
+
+    const currentBookIndex = bookOrder.indexOf(bookId);
+    if (currentBookIndex < bookOrder.length - 1) {
+        return { book: bookOrder[currentBookIndex + 1], chapter: 1, verse: 1 };
+    }
+
+    return null;
+}
+
+async function fetchVersePreview(bookId, chapterNumber, verseNumber) {
+    const response = await fetch(`https://biblia-api.qhar.in/book/${bookId}/chapter/${chapterNumber}/verse/${verseNumber}`);
+    if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const verseData = await response.json();
+    if (!verseData || verseData.length === 0) {
+        throw new Error('No se encontró el versículo');
+    }
+
+    return {
+        reference: verseData[0].reference,
+        text: cleanVerseText(verseData[0].content)
+    };
+}
+
 // Actualizar vista previa
 async function updatePreview() {
     try {
-        const response = await fetch(`https://biblia-api.qhar.in/book/${currentBook}/chapter/${currentChapter}/verse/${currentVerse}`);
-        if (response.ok) {
-            const verseData = await response.json();
-            if (verseData && verseData.length > 0) {
-                let cleanedContent = verseData[0].content;
-                const closingBracketIndex = cleanedContent.indexOf(']');
-                if (closingBracketIndex !== -1) {
-                    cleanedContent = cleanedContent.substring(closingBracketIndex + 1);
-                }
-                cleanedContent = cleanedContent.replace(/\s+/g, ' ');
-                previewCurrent.querySelector('.verse-text').textContent = cleanedContent;
-                previewCurrent.querySelector('.verse-ref').textContent = `Actual: ${verseData[0].reference}`;
-            }
+        const currentPreview = await fetchVersePreview(currentBook, currentChapter, currentVerse);
+        previewCurrent.querySelector('.verse-text').textContent = currentPreview.text;
+        previewCurrent.querySelector('.verse-ref').textContent = `Actual: ${currentPreview.reference}`;
+
+        const nextLocation = await getNextVerseLocation(currentBook, currentChapter, currentVerse);
+        if (nextLocation) {
+            const nextPreview = await fetchVersePreview(nextLocation.book, nextLocation.chapter, nextLocation.verse);
+            previewNext.querySelector('.verse-text').textContent = nextPreview.text;
+            previewNext.querySelector('.verse-ref').textContent = `Siguiente: ${nextPreview.reference}`;
+        } else {
+            previewNext.querySelector('.verse-text').textContent = 'No hay siguiente versículo';
+            previewNext.querySelector('.verse-ref').textContent = 'Siguiente: Fin';
         }
     } catch (error) {
-        console.error('Error al cargar vista previa actual:', error);
+        console.error('Error al cargar vista previa:', error);
         previewCurrent.querySelector('.verse-text').textContent = 'Error al cargar el versículo';
         previewCurrent.querySelector('.verse-ref').textContent = 'Actual: Error';
+        previewNext.querySelector('.verse-text').textContent = 'Error al cargar el siguiente versículo';
+        previewNext.querySelector('.verse-ref').textContent = 'Siguiente: Error';
     }
 }
 
@@ -413,6 +483,15 @@ async function updatePreview() {
 function sendCommand(command) {
     localStorage.setItem('bibleVerseCommand', JSON.stringify(command));
     window.dispatchEvent(new Event('storage'));
+}
+
+function sendThemeSettings() {
+    sendCommand({
+        action: 'theme-settings',
+        textX: themeSettings.textX,
+        textY: themeSettings.textY,
+        backgroundVisible: themeSettings.backgroundVisible
+    });
 }
 
 // Navegar al versículo anterior
@@ -490,6 +569,7 @@ async function loadAndShowVerse() {
     if (!bookId || !chapterNumber || !verseNumber) {
         return;
     }
+    sendThemeSettings();
     try {
         const response = await fetch(`https://biblia-api.qhar.in/book/${bookId}/chapter/${chapterNumber}/verse/${verseNumber}`);
         if (!response.ok) {
@@ -507,6 +587,9 @@ async function loadAndShowVerse() {
             verse: verseNumber,
             content: cleanContent,
             reference: verseData[0].reference,
+            textX: themeSettings.textX,
+            textY: themeSettings.textY,
+            backgroundVisible: themeSettings.backgroundVisible,
             show: true
         });
         currentBook = bookId;
@@ -524,6 +607,7 @@ async function loadAndShowVerse() {
 function toggleVisibility() {
     isVisible = visibilityToggle.checked;
     if (isVisible) {
+        sendThemeSettings();
         loadAndShowVerse();
     } else {
         sendCommand({ action: 'hide' });
@@ -531,13 +615,39 @@ function toggleVisibility() {
     saveState();
 }
 
+function updateThemeSettings() {
+    themeSettings = {
+        textX: parseInt(textXInput.value, 10) || 50,
+        textY: parseInt(textYInput.value, 10) || 16,
+        backgroundVisible: backgroundToggle.checked
+    };
+    sendThemeSettings();
+    saveState();
+}
+
+function initializeCollapsibleSections() {
+    document.querySelectorAll('.collapsible-section .section-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+            const section = button.closest('.collapsible-section');
+            const isOpen = section.classList.toggle('open');
+            button.setAttribute('aria-expanded', String(isOpen));
+        });
+    });
+}
+
 // Configurar event listeners
 document.addEventListener('DOMContentLoaded', function () {
     initializeBookSelect();
+    initializeCollapsibleSections();
     loadSavedState();
+    updatePreview();
+    updateButtonStates();
     prevVerseBtn.addEventListener('click', goToPreviousVerse);
     nextVerseBtn.addEventListener('click', goToNextVerse);
     visibilityToggle.addEventListener('change', toggleVisibility);
+    textXInput.addEventListener('input', updateThemeSettings);
+    textYInput.addEventListener('input', updateThemeSettings);
+    backgroundToggle.addEventListener('change', updateThemeSettings);
 
     // Eventos para búsqueda de libros
     bookSearchInput.addEventListener('input', function () {
