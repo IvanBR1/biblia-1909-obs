@@ -13,17 +13,30 @@ const bookDropdown = document.getElementById('book-dropdown');
 const textXInput = document.getElementById('text-x');
 const textYInput = document.getElementById('text-y');
 const backgroundToggle = document.getElementById('background-toggle');
+const fontFamilyInput = document.getElementById('font-family');
+const fontSizeInput = document.getElementById('font-size');
+const textColorInput = document.getElementById('text-color');
+const textAlignInput = document.getElementById('text-align');
+const lineHeightInput = document.getElementById('line-height');
+const backgroundColorInput = document.getElementById('background-color');
+const backgroundOpacityInput = document.getElementById('background-opacity');
+const paddingInput = document.getElementById('padding');
+const maxWidthInput = document.getElementById('max-width');
+const textEffectInput = document.getElementById('text-effect');
+const themeList = document.getElementById('theme-list');
+const settingsButton = document.getElementById('settings-button');
+const settingsDrawer = document.getElementById('settings-drawer');
+const settingsClose = document.getElementById('settings-close');
+const settingsScrim = document.getElementById('settings-scrim');
+const resetThemeSettingsButton = document.getElementById('reset-theme-settings');
 
 // Estado actual
 let currentBook = 'GEN';
 let currentChapter = 1;
 let currentVerse = 1;
 let isVisible = false;
-let themeSettings = {
-    textX: 50,
-    textY: 16,
-    backgroundVisible: true
-};
+let selectedThemeId = 'classic';
+let themeSettings = { ...window.BibleThemeDefaults };
 
 // Historial de búsquedas (máximo 10)
 let searchHistory = [];
@@ -256,10 +269,14 @@ function loadSavedState() {
         currentChapter = state.chapter || 1;
         currentVerse = state.verse || 1;
         isVisible = state.visible || false;
+        selectedThemeId = window.BibleThemeRegistry.has(state.themeId) ? state.themeId : 'classic';
         themeSettings = {
-            textX: state.textX || 50,
-            textY: state.textY || 16,
-            backgroundVisible: state.backgroundVisible !== false
+            ...getThemeDefaults(),
+            ...(state.themeSettings || {}),
+            // Migración transparente de los tres valores guardados por la versión anterior.
+            ...(typeof state.textX !== 'undefined' ? { textX: state.textX } : {}),
+            ...(typeof state.textY !== 'undefined' ? { textY: state.textY } : {}),
+            ...(typeof state.backgroundVisible !== 'undefined' ? { backgroundVisible: state.backgroundVisible } : {})
         };
         bookSelect.value = currentBook;
         const currentBookData = allBooks.find(b => b.code === currentBook);
@@ -269,9 +286,8 @@ function loadSavedState() {
         chapterInput.value = currentChapter;
         verseInput.value = currentVerse;
         visibilityToggle.checked = isVisible;
-        textXInput.value = themeSettings.textX;
-        textYInput.value = themeSettings.textY;
-        backgroundToggle.checked = themeSettings.backgroundVisible;
+        renderThemeCards();
+        syncThemeSettingsUI();
         updatePreview();
         updateButtonStates();
         sendThemeSettings();
@@ -292,9 +308,8 @@ function saveState() {
         chapter: currentChapter,
         verse: currentVerse,
         visible: isVisible,
-        textX: themeSettings.textX,
-        textY: themeSettings.textY,
-        backgroundVisible: themeSettings.backgroundVisible
+        themeId: selectedThemeId,
+        themeSettings
     };
     localStorage.setItem('bibleControlState', JSON.stringify(state));
 }
@@ -486,11 +501,12 @@ function sendCommand(command) {
 }
 
 function sendThemeSettings() {
+    localStorage.setItem('bibleSelectedTheme', selectedThemeId);
+    localStorage.setItem('bibleThemeSettings', JSON.stringify({ themeId: selectedThemeId, settings: themeSettings }));
     sendCommand({
         action: 'theme-settings',
-        textX: themeSettings.textX,
-        textY: themeSettings.textY,
-        backgroundVisible: themeSettings.backgroundVisible
+        themeId: selectedThemeId,
+        settings: themeSettings
     });
 }
 
@@ -558,7 +574,7 @@ function formatVerseContent(content) {
         cleanedContent = cleanedContent.substring(closingBracketIndex + 1).trim();
     }
     cleanedContent = cleanedContent.replace(/\s+/g, ' ');
-    return `<div style="font-size: 1.8rem; line-height: 1.6; text-align: left; font-family: 'Merriweather', serif;">${cleanedContent}</div>`;
+    return cleanedContent;
 }
 
 // Cargar y mostrar el versículo actual
@@ -587,9 +603,8 @@ async function loadAndShowVerse() {
             verse: verseNumber,
             content: cleanContent,
             reference: verseData[0].reference,
-            textX: themeSettings.textX,
-            textY: themeSettings.textY,
-            backgroundVisible: themeSettings.backgroundVisible,
+            themeId: selectedThemeId,
+            settings: themeSettings,
             show: true
         });
         currentBook = bookId;
@@ -615,12 +630,78 @@ function toggleVisibility() {
     saveState();
 }
 
+function getThemeDefaults() {
+    const theme = window.BibleThemeRegistry.get(selectedThemeId);
+    return { ...window.BibleThemeDefaults, ...(theme ? theme.defaults : {}) };
+}
+
+function syncThemeSettingsUI() {
+    const inputs = {
+        'text-x': themeSettings.textX, 'text-y': themeSettings.textY, 'font-size': themeSettings.fontSize,
+        'text-color': themeSettings.textColor, 'text-align': themeSettings.textAlign, 'line-height': themeSettings.lineHeight,
+        'background-color': themeSettings.backgroundColor, 'background-opacity': themeSettings.backgroundOpacity,
+        padding: themeSettings.padding, 'max-width': themeSettings.maxWidth, 'text-effect': themeSettings.textEffect
+    };
+    Object.entries(inputs).forEach(([id, value]) => { const input = document.getElementById(id); if (input) input.value = value; });
+    backgroundToggle.checked = themeSettings.backgroundVisible !== false;
+    const theme = window.BibleThemeRegistry.get(selectedThemeId);
+    fontFamilyInput.innerHTML = '';
+    (theme.fonts || []).forEach(font => {
+        const option = document.createElement('option'); option.value = font; option.textContent = font.split(',')[0]; fontFamilyInput.appendChild(option);
+    });
+    if (![...fontFamilyInput.options].some(option => option.value === themeSettings.fontFamily)) {
+        const option = document.createElement('option'); option.value = themeSettings.fontFamily; option.textContent = themeSettings.fontFamily.split(',')[0]; fontFamilyInput.appendChild(option);
+    }
+    fontFamilyInput.value = themeSettings.fontFamily;
+    updateSettingOutputs();
+}
+
+function updateSettingOutputs() {
+    const labels = { 'text-x': '%', 'text-y': '%', 'font-size': ' px', 'line-height': '', 'background-opacity': '%', padding: ' px', 'max-width': ' px' };
+    Object.entries(labels).forEach(([id, unit]) => {
+        const output = document.getElementById(`${id}-value`); const input = document.getElementById(id);
+        if (output && input) output.textContent = `${input.value}${unit}`;
+    });
+}
+
+function renderThemeCards() {
+    themeList.innerHTML = '';
+    window.BibleThemeRegistry.all().forEach(theme => {
+        const card = document.createElement('button');
+        card.type = 'button'; card.className = `theme-card${theme.id === selectedThemeId ? ' selected' : ''}`;
+        card.setAttribute('role', 'radio'); card.setAttribute('aria-checked', String(theme.id === selectedThemeId));
+        card.innerHTML = `<span class="theme-swatch theme-swatch-${theme.id}"></span><span><strong>${theme.name}</strong><small>${theme.description}</small></span>`;
+        card.addEventListener('click', () => selectTheme(theme.id));
+        themeList.appendChild(card);
+    });
+}
+
+function selectTheme(themeId) {
+    selectedThemeId = themeId;
+    themeSettings = getThemeDefaults();
+    renderThemeCards();
+    syncThemeSettingsUI();
+    sendThemeSettings();
+    saveState();
+}
+
 function updateThemeSettings() {
     themeSettings = {
         textX: parseInt(textXInput.value, 10) || 50,
         textY: parseInt(textYInput.value, 10) || 16,
-        backgroundVisible: backgroundToggle.checked
+        fontFamily: fontFamilyInput.value,
+        fontSize: parseInt(fontSizeInput.value, 10) || 52,
+        textColor: textColorInput.value,
+        textAlign: textAlignInput.value,
+        lineHeight: parseFloat(lineHeightInput.value) || 1.2,
+        backgroundColor: backgroundColorInput.value,
+        backgroundOpacity: parseInt(backgroundOpacityInput.value, 10),
+        backgroundVisible: backgroundToggle.checked,
+        padding: parseInt(paddingInput.value, 10),
+        maxWidth: parseInt(maxWidthInput.value, 10),
+        textEffect: textEffectInput.value
     };
+    updateSettingOutputs();
     sendThemeSettings();
     saveState();
 }
@@ -639,15 +720,35 @@ function initializeCollapsibleSections() {
 document.addEventListener('DOMContentLoaded', function () {
     initializeBookSelect();
     initializeCollapsibleSections();
+    renderThemeCards();
+    syncThemeSettingsUI();
     loadSavedState();
     updatePreview();
     updateButtonStates();
     prevVerseBtn.addEventListener('click', goToPreviousVerse);
     nextVerseBtn.addEventListener('click', goToNextVerse);
     visibilityToggle.addEventListener('change', toggleVisibility);
-    textXInput.addEventListener('input', updateThemeSettings);
-    textYInput.addEventListener('input', updateThemeSettings);
-    backgroundToggle.addEventListener('change', updateThemeSettings);
+    [textXInput, textYInput, fontSizeInput, lineHeightInput, backgroundOpacityInput, paddingInput, maxWidthInput]
+        .forEach(input => input.addEventListener('input', updateThemeSettings));
+    [fontFamilyInput, textColorInput, textAlignInput, backgroundColorInput, backgroundToggle, textEffectInput]
+        .forEach(input => input.addEventListener('change', updateThemeSettings));
+    resetThemeSettingsButton.addEventListener('click', () => {
+        themeSettings = getThemeDefaults();
+        syncThemeSettingsUI();
+        sendThemeSettings();
+        saveState();
+    });
+    const toggleSettings = (open) => {
+        settingsDrawer.classList.toggle('open', open);
+        settingsDrawer.setAttribute('aria-hidden', String(!open));
+        settingsButton.setAttribute('aria-expanded', String(open));
+        settingsScrim.hidden = !open;
+        if (open) settingsClose.focus();
+    };
+    settingsButton.addEventListener('click', () => toggleSettings(!settingsDrawer.classList.contains('open')));
+    settingsClose.addEventListener('click', () => toggleSettings(false));
+    settingsScrim.addEventListener('click', () => toggleSettings(false));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') toggleSettings(false); });
 
     // Eventos para búsqueda de libros
     bookSearchInput.addEventListener('input', function () {
