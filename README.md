@@ -1,106 +1,67 @@
-# Visualizador de Biblia para OBS · v2.0.0
+# Visualizador de Biblia para OBS · v2.1.0
 
-Panel local para buscar y presentar versículos de la Biblia Reina-Valera 1909 en una fuente de navegador de OBS. El panel y el visualizador se comunican por `localStorage`.
+Monolito local para buscar y presentar versículos de la Biblia Reina-Valera 1909 en una fuente de navegador de OBS. Incluye la base bíblica, el panel, el visualizador y cuatro temas; no consulta una API externa.
 
-## Acceso a la aplicación
+## Requisitos y ejecución
 
-Puedes usar la aplicación de dos formas:
+- Node.js 22.5 o posterior.
 
-- **Publicada:** [https://bible-1909-obs.netlify.app/](https://bible-1909-obs.netlify.app/)
-- **Local:** abre [index.html](D:\Documents\biblia-obs-1909\index.html) o [control-panel.html](D:\Documents\biblia-obs-1909\control-panel.html) directamente desde esta carpeta.
+```bash
+npm run build
+npm start
+```
 
-## Uso rápido
+Abre:
 
-1. Abre `control-panel.html` en el navegador que usarás como control, o entra al sitio publicado y abre el panel.
-2. En OBS agrega una fuente **Navegador** de 1920 × 1080.
-3. Usa esta URL local como fuente:
+- presentación y datos del desarrollador: `http://localhost:3000/`;
+- panel de control: `http://localhost:3000/panel/`;
+- fuente de navegador para OBS: `http://localhost:3000/visualizador/`.
 
-   ```text
-   file:///D:/Documents/biblia-obs-1909/bible-display.html
-   ```
+En OBS se recomienda una fuente Navegador de 1920 × 1080.
 
-4. Elige libro, capítulo y versículo y activa **Mostrar en OBS**.
-5. Abre el engrane para elegir un tema o personalizarlo.
+## Funciones
 
-## Panel de control
+- Selección directa por libro, capítulo y versículo.
+- Navegación anterior/siguiente continua, incluso entre capítulos y libros.
+- Búsqueda avanzada por palabras del texto bíblico, sin conocer la cita.
+- Selección de cualquier resultado para cargar automáticamente su libro, capítulo y versículo.
+- Vista previa del versículo actual y del siguiente.
+- Mostrar u ocultar la salida en OBS.
+- Temas Clásico, Libro moderno, Minimalista y Cinematográfico.
+- Personalización de posición, autoajuste, tipografía, colores, fondo, márgenes y contraste.
+- Persistencia local de la selección y los ajustes.
 
-La pantalla principal se concentra en la selección del pasaje y el envío a OBS. La vista previa y el historial comienzan cerrados. El botón de engrane abre un panel lateral con:
+## Base local
 
-- selector compacto de tema;
-- posición horizontal y vertical;
-- fuente, tamaño, color y alineación;
-- color, transparencia y visibilidad de fondo;
-- interlineado, márgenes internos y ancho máximo;
-- sombra, contorno o contraste;
-- restauración de valores predeterminados del tema seleccionado.
+El archivo fuente se conserva en `data/bible.db`. `npm run import` lo transforma de manera determinista en `data/bible.db.json`; `npm run build` publica una copia en `public/data/bible.db.json` para que el navegador pueda consultarla.
 
-Todos los valores se guardan automáticamente y se aplican de la misma forma a cualquier tema.
-
-## Temas incluidos
-
-- **Clásico**: tarjeta de lectura sobria.
-- **Libro moderno**: composición editorial sobre una imagen de Biblia.
-- **Minimalista**: placa semitransparente, limpia y discreta.
-- **Cinematográfico**: alto contraste, degradado y detalles dorados para proyección.
+La navegación incluye 66 libros, 1,189 capítulos y 31,102 versículos. Las introducciones editoriales existentes en el SQLite no se presentan como capítulos.
 
 ## Estructura
 
 ```text
-biblia-obs-1909/
-├── index.html                      # Información del proyecto y autor
-├── bible-display.html              # Visualizador único para OBS
-├── control-panel.html
-├── control.js
-├── style.css
-├── themes/
-│   ├── index.js                    # Registro central
-│   ├── types.js                    # Esquema documental común
-│   ├── shared/
-│   │   ├── defaults.js
-│   │   ├── utilities.js
-│   │   ├── commonStyles.css
-│   │   └── preview-runtime.js
-│   ├── classic/
-│   │   ├── config.js
-│   │   ├── styles.css
-│   │   ├── preview.html
-│   │   └── assets/
-│   ├── modern/
-│   │   ├── config.js
-│   │   ├── styles.css
-│   │   ├── preview.html
-│   │   └── assets/biblia_bg_1.png
-│   ├── minimal/
-│   │   ├── config.js
-│   │   ├── styles.css
-│   │   ├── preview.html
-│   │   └── assets/
-│   └── cinematic/
-│       ├── config.js
-│       ├── styles.css
-│       ├── preview.html
-│       └── assets/
-└── README.md
+visualizador-biblia-obs/
+├── data/
+│   ├── bible.db
+│   └── bible.db.json
+├── public/
+│   ├── index.html
+│   ├── panel/index.html
+│   ├── visualizador/index.html
+│   ├── assets/
+│   ├── data/bible.db.json
+│   └── themes/
+├── src/
+│   ├── import-bible.js
+│   ├── build-static.js
+│   └── server.js
+└── test/application.test.js
 ```
 
-## Agregar un tema nuevo
+## Créditos y procedencia
 
-1. Duplica una carpeta de `themes/` con un nombre único, por ejemplo `themes/sereno/`.
-2. En `config.js` registra el tema con `window.BibleThemeRegistry.register(...)`. Define `id`, `name`, `description`, `preview`, `fonts`, `defaults` y `render`.
-3. Crea los estilos exclusivos en `styles.css`; utiliza las variables compartidas `--verse-x`, `--verse-y`, `--verse-font-size`, `--verse-text-color`, `--verse-container-bg`, `--verse-padding` y `--verse-max-width` para que los controles funcionen automáticamente.
-4. Guarda imágenes, texturas u otros recursos en `assets/` y usa rutas relativas desde el CSS.
-5. Agrega `sereno` a la lista de carga central de `themes/index.js`; esta registra tanto su configuración como su hoja de estilos.
-6. Crea `preview.html` que redirija a `../../bible-display.html?theme=sereno`.
+Desarrollado por **Iván Bermúdez Regino**.
 
-No hace falta modificar `control-panel.html`, `control.js` ni el motor del visualizador: el registro central incorpora automáticamente el tema al selector.
+La base Reina-Valera 1909 fue importada del proyecto [`jh0rman/biblia-api`](https://github.com/jh0rman/biblia-api), declarado bajo licencia ISC. La traducción Reina-Valera 1909 es de dominio público; la descripción de procedencia se conserva también dentro del JSON generado.
 
-## API
-
-El proyecto consulta:
-
-```text
-https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse/{verseNumber}
-https://biblia-api.qhar.in/book/{bookId}/chapter/{chapterNumber}/verse
-```
-
-Si no carga un versículo, comprueba la conexión a internet y la disponibilidad de la API.
+Soli Deo Gloria.
