@@ -9,9 +9,9 @@ window.BibleThemeUtilities = {
         const value = parseInt(cleanHex, 16);
         return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${opacity})`;
     },
-    sanitizeText(text) {
+    sanitizeText(text, fallback = '') {
         const element = document.createElement('div');
         element.innerHTML = text || '';
-        return element.textContent || element.innerText || 'Texto no disponible';
+        return element.textContent || element.innerText || fallback;
     }
 };

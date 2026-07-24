@@ -19,6 +19,29 @@ function cleanContent(content) {
   return String(content || '').replace(/^\s*\[\d+\]\s*/u, '').replace(/\s+/gu, ' ').trim();
 }
 
+function parseVerseContent(content) {
+  const lines = String(content || '').replace(/\r\n?/gu, '\n').split('\n');
+  const verseLineIndex = lines.findIndex(line => /^\s*\[\d+\]\s*/u.test(line));
+
+  if (verseLineIndex < 0) return { content: cleanContent(content), heading: '', note: '' };
+
+  const headingLines = lines.slice(0, verseLineIndex).filter(line => line.trim());
+  const hasNumberedHeading = headingLines.length > 0 && headingLines.every(line => /^\s*\d+\s+/u.test(line));
+  const heading = hasNumberedHeading
+    ? headingLines.map(line => line.replace(/^\s*\d+\s+/u, '').trim()).join(' ')
+    : '';
+  const remainingLines = lines.slice(verseLineIndex);
+  const noteStart = remainingLines.findIndex((line, index) => index > 0 && !line.trim());
+  const verseLines = noteStart < 0 ? remainingLines : remainingLines.slice(0, noteStart);
+  const noteLines = noteStart < 0 ? [] : remainingLines.slice(noteStart + 1);
+
+  return {
+    content: cleanContent([...(!hasNumberedHeading ? headingLines : []), ...verseLines].join(' ')),
+    heading,
+    note: noteLines.join(' ').replace(/\s+/gu, ' ').trim()
+  };
+}
+
 function buildDatabase(sourcePath = SOURCE_DATABASE_PATH) {
   if (!fs.existsSync(sourcePath)) throw new Error(`No existe la base SQLite: ${sourcePath}`);
   const sqlite = new DatabaseSync(sourcePath, { readOnly: true });
@@ -49,7 +72,7 @@ function buildDatabase(sourcePath = SOURCE_DATABASE_PATH) {
         id: verse.id,
         number: verse.number,
         reference: verse.reference,
-        content: cleanContent(verse.content)
+        ...parseVerseContent(verse.content)
       });
     }
     for (const chapter of chaptersById.values()) {
@@ -122,5 +145,6 @@ module.exports = {
   SOURCE_DATABASE_PATH,
   buildDatabase,
   cleanContent,
+  parseVerseContent,
   importDatabase
 };

@@ -109,6 +109,8 @@ function sendCurrentVerse() {
   sendCommand({
     action: 'load',
     content: verse.content,
+    heading: verse.heading,
+    note: verse.note,
     reference: `${verse.reference} · ${database.translation.abbreviation}`,
     show: isVisible,
     themeId: selectedThemeId,
@@ -116,12 +118,28 @@ function sendCurrentVerse() {
   });
 }
 
+function renderPreviewPassage(container, verse, fallback) {
+  const text = container.querySelector('.verse-text');
+  text.replaceChildren();
+  if (!verse) {
+    text.textContent = fallback;
+    return;
+  }
+  for (const [className, content] of [['verse-heading', verse.heading], ['verse-body', verse.content], ['verse-note', verse.note]]) {
+    if (!content) continue;
+    const section = document.createElement('div');
+    section.className = className;
+    section.textContent = content;
+    text.append(section);
+  }
+}
+
 function updatePreview() {
   const { book, chapter, verse } = currentPassage();
   const following = adjacentPassage(1);
-  elements.previewCurrent.querySelector('.verse-text').textContent = verse?.content || 'Selecciona un versículo';
+  renderPreviewPassage(elements.previewCurrent, verse, 'Selecciona un versículo');
   elements.previewCurrent.querySelector('.verse-ref').textContent = verse ? `Actual: ${verse.reference}` : 'Actual';
-  elements.previewNext.querySelector('.verse-text').textContent = following?.verse.content || 'Fin de la Biblia';
+  renderPreviewPassage(elements.previewNext, following?.verse, 'Fin de la Biblia');
   elements.previewNext.querySelector('.verse-ref').textContent = following ? `Siguiente: ${following.verse.reference}` : 'Siguiente';
   elements.reference.textContent = verse?.reference || '—';
   elements.bookMeta.textContent = book && chapter

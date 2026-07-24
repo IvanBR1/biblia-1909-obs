@@ -10,6 +10,7 @@ const {
   SOURCE_DATABASE_PATH,
   buildDatabase,
   cleanContent,
+  parseVerseContent,
   importDatabase
 } = require('../src/import-bible');
 
@@ -27,6 +28,14 @@ test('importa la Reina-Valera 1909 completa desde el SQLite local', () => {
   assert.equal(database.books[0].chapters[0].verses[0].reference, 'Génesis 1:1');
   assert.equal(database.books[0].chapters[0].verses[0].content, 'EN el principio crió Dios los cielos y la tierra.');
   assert.equal(cleanContent('[12]  Texto   con espacios.'), 'Texto con espacios.');
+  assert.deepEqual(
+    parseVerseContent('1 Fortaleza y constancia\n2 en el trabajo cristiano.\n     [19] Atesorando para sí buen fundamento para lo por venir.'),
+    { heading: 'Fortaleza y constancia en el trabajo cristiano.', content: 'Atesorando para sí buen fundamento para lo por venir.', note: '' }
+  );
+  assert.deepEqual(
+    parseVerseContent('[22] El Señor Jesucristo sea con tu espíritu.\n    \n    Nota final de la epístola.'),
+    { heading: '', content: 'El Señor Jesucristo sea con tu espíritu.', note: 'Nota final de la epístola.' }
+  );
 });
 
 test('genera y publica una base navegable determinista', () => {
@@ -77,6 +86,7 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   const panel = fs.readFileSync(path.join(ROOT, 'public', 'panel', 'index.html'), 'utf8');
   const control = fs.readFileSync(path.join(ROOT, 'public', 'assets', 'js', 'control.js'), 'utf8');
   const runtime = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'preview-runtime.js'), 'utf8');
+  const commonStyles = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'commonStyles.css'), 'utf8');
 
   assert.equal(packageJson.version, '2.1.0');
   assert.match(presentation, /Versión 2\.1\.0/u);
@@ -86,6 +96,10 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(control, /searchableVerses/u);
   assert.match(control, /selectPassage\(result\.bookId, result\.chapter, result\.verse/u);
   assert.match(runtime, /bibleDisplayCommand/u);
+  assert.match(runtime, /setPassageContent/u);
+  assert.match(control, /renderPreviewPassage/u);
+  assert.match(commonStyles, /\.verse-heading/u);
+  assert.match(commonStyles, /\.verse-note/u);
   assert.doesNotMatch(runtime, /hymnal/u);
   for (const theme of ['classic', 'modern', 'minimal', 'cinematic']) {
     assert.ok(fs.existsSync(path.join(ROOT, 'public', 'themes', theme, 'config.js')));

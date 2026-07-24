@@ -6,7 +6,9 @@
   let selectedThemeId = preferredTheme || localStorage.getItem('bibleSelectedTheme') || 'classic';
   let activeSettings = {};
   let verseContainer;
+  let verseHeading;
   let verseText;
+  let verseNote;
   let verseReference;
   let fitFrame;
 
@@ -88,6 +90,12 @@
     });
   }
 
+  function setPassageContent({ content = '', heading = '', note = '' }) {
+    verseHeading.textContent = window.BibleThemeUtilities.sanitizeText(heading);
+    verseText.textContent = window.BibleThemeUtilities.sanitizeText(content);
+    verseNote.textContent = window.BibleThemeUtilities.sanitizeText(note);
+  }
+
   function applySettings(settings) {
     activeSettings = { ...getDefaults(), ...activeSettings, ...(settings || {}) };
     const safe = window.BibleThemeUtilities;
@@ -107,7 +115,11 @@
 
   function renderTheme(themeId) {
     if (!window.BibleThemeRegistry.has(themeId)) return;
-    const oldText = verseText ? verseText.textContent : '';
+    const oldPassage = {
+      heading: verseHeading ? verseHeading.textContent : '',
+      content: verseText ? verseText.textContent : '',
+      note: verseNote ? verseNote.textContent : ''
+    };
     const oldReference = verseReference ? verseReference.textContent : '';
     const wasVisible = verseContainer && verseContainer.classList.contains('visible');
     selectedThemeId = themeId;
@@ -115,9 +127,11 @@
     body.dataset.theme = theme.id;
     document.getElementById('theme-root').innerHTML = theme.render();
     verseContainer = document.getElementById('verse-container');
+    verseHeading = document.getElementById('verse-heading');
     verseText = document.getElementById('verse-text');
+    verseNote = document.getElementById('verse-note');
     verseReference = document.getElementById('verse-reference');
-    verseText.textContent = oldText;
+    setPassageContent(oldPassage);
     verseReference.textContent = oldReference;
     applySettings(activeSettings);
     if (wasVisible) showVerse();
@@ -138,7 +152,7 @@
     if (command.themeId && command.themeId !== selectedThemeId) renderTheme(command.themeId);
     if (command.settings) applySettings(command.settings);
     if (command.action === 'load') {
-      verseText.textContent = window.BibleThemeUtilities.sanitizeText(command.content || '');
+      setPassageContent(command);
       verseReference.textContent = command.reference || '';
       if (command.show !== false) showVerse();
       scheduleFit();

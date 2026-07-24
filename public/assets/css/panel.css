@@ -128,6 +128,8 @@ select:focus, input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .preview-verse .verse-text { position: relative; z-index: 1; color: #f4f6f9; white-space: pre-line; }
 .preview-verse.current .verse-text { max-width: 92%; font-family: Georgia, serif; font-size: clamp(19px, 2.2vw, 27px); line-height: 1.45; }
 .preview-verse.next .verse-text { color: #aeb6c2; font-size: 11px; line-height: 1.55; }
+.preview-verse .verse-heading { margin-bottom: .55em; color: #8bb6f7; font-family: 'Open Sans', Arial, sans-serif; font-size: .52em; font-weight: 700; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; }
+.preview-verse .verse-note { margin-top: .8em; color: #9ba6b4; font-size: .58em; font-style: italic; line-height: 1.45; }
 .part-badge { padding: 4px 8px; border-radius: 99px; background: rgba(79,143,240,.14); color: #8bb6f7; font-size: 8px; }
 .part-badge:empty { display: none; }
 .obs-url { display: grid; gap: 5px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); color: var(--muted); font-size: 8px; }

@@ -49,5 +49,29 @@ body { background: transparent; }
     overflow-wrap: anywhere;
     white-space: pre-line;
 }
+.verse-heading {
+    margin-bottom: .65em;
+    color: #d9b56b;
+    font-family: var(--verse-font-family);
+    font-size: clamp(12px, calc(var(--verse-font-size) * .48), 32px);
+    font-weight: 700;
+    letter-spacing: .08em;
+    line-height: 1.2;
+    text-align: var(--verse-text-align);
+    text-shadow: var(--verse-text-shadow);
+    text-transform: uppercase;
+}
+.verse-heading:empty { display: none; }
+.verse-note {
+    margin-top: .85em;
+    color: color-mix(in srgb, var(--verse-text-color) 68%, transparent);
+    font-family: var(--verse-font-family);
+    font-size: clamp(11px, calc(var(--verse-font-size) * .46), 30px);
+    font-style: italic;
+    line-height: 1.35;
+    text-align: var(--verse-text-align);
+    text-shadow: var(--verse-text-shadow);
+}
+.verse-note:empty { display: none; }
 .verse-reference { color: var(--verse-text-color); font-family: var(--verse-font-family); text-align: var(--verse-text-align); text-shadow: var(--verse-text-shadow); }
 body.background-hidden .verse-container { background: transparent !important; }
