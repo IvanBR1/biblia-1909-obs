@@ -6,20 +6,34 @@
     --verse-translate-x: -50%;
     --verse-translate-y: -50%;
     --verse-font-family: Merriweather, Georgia, serif;
+    --verse-font-weight: 400;
     --verse-font-size: 52px;
     --verse-text-color: #f8efe0;
     --verse-container-bg: rgba(23, 33, 43, 0.88);
     --verse-text-align: center;
     --verse-line-height: 1.2;
+    --verse-letter-spacing: 0px;
     --verse-padding: 32px;
     --verse-max-width: 1120px;
     --verse-text-shadow: 0 4px 18px rgba(0, 0, 0, .78);
     --verse-filter: none;
+    --verse-transition-duration: 550ms;
 }
 
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { background: transparent; }
+.scene-background, .scene-shade { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--verse-transition-duration) ease; }
+.scene-background { z-index: 0; overflow: hidden; background: var(--scene-background-color, #17212b); }
+.scene-background img { display: none; width: 100%; height: 100%; object-fit: var(--scene-background-fit, cover); object-position: var(--scene-background-position, center center); }
+.scene-shade { z-index: 1; background: rgba(0, 0, 0, var(--scene-background-shade, .42)); }
+.obs-stage { z-index: 2; }
+body.has-verse:not(.background-hidden) .scene-background, body.has-verse:not(.background-hidden) .scene-shade { opacity: 1; }
+body[data-background-type="image"] .scene-background img { display: block; }
+body[data-background-type="none"] .scene-background,
+body[data-background-type="none"] .scene-shade { opacity: 0 !important; }
+body.animate-background.has-verse:not(.background-hidden) .scene-background img { animation: bible-background-drift 18s ease-in-out infinite alternate; }
+@keyframes bible-background-drift { from { transform: scale(1.04); } to { transform: scale(1.12) translate3d(-1.5%, 1%, 0); } }
 .obs-stage { position: fixed; inset: 0; overflow: hidden; }
 .verse-container {
     position: absolute;
@@ -35,13 +49,22 @@ body { background: transparent; }
     transform: translate(var(--verse-translate-x), var(--verse-translate-y)) scale(.985);
     opacity: 0;
     overflow: hidden;
-    transition: opacity .45s ease, transform .55s cubic-bezier(.16, 1, .3, 1);
+    transition: opacity var(--verse-transition-duration) ease, transform var(--verse-transition-duration) cubic-bezier(.16, 1, .3, 1), clip-path var(--verse-transition-duration) ease, filter var(--verse-transition-duration) ease;
 }
 .verse-container.visible { opacity: 1; transform: translate(var(--verse-translate-x), var(--verse-translate-y)) scale(1); }
+body[data-transition="slide"] .verse-container { transform: translate(calc(var(--verse-translate-x) - 44px), var(--verse-translate-y)); }
+body[data-transition="slide"] .verse-container.visible { transform: translate(var(--verse-translate-x), var(--verse-translate-y)); }
+body[data-transition="scale"] .verse-container { transform: translate(var(--verse-translate-x), var(--verse-translate-y)) scale(.82); }
+body[data-transition="reveal"] .verse-container { clip-path: inset(0 100% 0 0); }
+body[data-transition="reveal"] .verse-container.visible { clip-path: inset(0); }
+body[data-transition="flip"] .verse-container { transform: translate(var(--verse-translate-x), var(--verse-translate-y)) perspective(1100px) rotateX(24deg); }
+body[data-transition="flip"] .verse-container.visible { transform: translate(var(--verse-translate-x), var(--verse-translate-y)) perspective(1100px) rotateX(0); }
 .verse-text, .verse-text * {
     color: var(--verse-text-color) !important;
     font-family: var(--verse-font-family) !important;
+    font-weight: var(--verse-font-weight) !important;
     font-size: var(--verse-font-size) !important;
+    letter-spacing: var(--verse-letter-spacing) !important;
     line-height: var(--verse-line-height) !important;
     text-align: var(--verse-text-align) !important;
     text-shadow: var(--verse-text-shadow);
@@ -62,6 +85,12 @@ body { background: transparent; }
     text-transform: uppercase;
 }
 .verse-heading:empty { display: none; }
+.psalm-superscription { display: none; margin-bottom: .6em; color: color-mix(in srgb, var(--verse-text-color) 72%, #d9b56b); font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(14px, calc(var(--verse-font-size) * .42), 30px); font-style: italic; font-weight: 600; letter-spacing: .025em; line-height: 1.25; text-align: var(--verse-text-align); }
+.psalm-superscription:not(:empty) { display: block; }
+.psalm-superscription::after { display: block; width: 38px; height: 1px; margin-top: .45em; background: currentColor; content: ''; opacity: .5; }
+body[data-text-align="left"] .psalm-superscription::after { margin-left: 0; }
+body[data-text-align="center"] .psalm-superscription::after { margin-right: auto; margin-left: auto; }
+body[data-text-align="right"] .psalm-superscription::after { margin-right: 0; margin-left: auto; }
 .verse-note {
     margin-top: .85em;
     color: color-mix(in srgb, var(--verse-text-color) 68%, transparent);
@@ -74,4 +103,6 @@ body { background: transparent; }
 }
 .verse-note:empty { display: none; }
 .verse-reference { color: var(--verse-text-color); font-family: var(--verse-font-family); text-align: var(--verse-text-align); text-shadow: var(--verse-text-shadow); }
-body.background-hidden .verse-container { background: transparent !important; }
+/* No ocultar el fondo del contenedor cuando se oculta el fondo general.
+    El control "Mostrar fondo" solo debe afectar a la escena completa, no
+    al contenedor de versículos ni a su color. */

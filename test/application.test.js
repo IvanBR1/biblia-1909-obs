@@ -88,20 +88,23 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   const runtime = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'preview-runtime.js'), 'utf8');
   const commonStyles = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'commonStyles.css'), 'utf8');
 
-  assert.equal(packageJson.version, '2.1.0');
-  assert.match(presentation, /Versión 2\.1\.0/u);
+  assert.equal(packageJson.version, '2.1.1');
+  assert.match(presentation, /Versión 2\.1\.1/u);
   assert.match(presentation, /Iván Bermúdez Regino/u);
   assert.match(panel, /id="text-search"/u);
+  assert.match(panel, /id="anchor-popover"/u);
+  assert.match(panel, /Apariencia del visualizador/u);
   assert.match(control, /\/data\/bible\.db\.json/u);
   assert.match(control, /searchableVerses/u);
   assert.match(control, /selectPassage\(result\.bookId, result\.chapter, result\.verse/u);
   assert.match(runtime, /bibleDisplayCommand/u);
   assert.match(runtime, /setPassageContent/u);
+  assert.match(runtime, /measurePassage/u);
   assert.match(control, /renderPreviewPassage/u);
   assert.match(commonStyles, /\.verse-heading/u);
   assert.match(commonStyles, /\.verse-note/u);
   assert.doesNotMatch(runtime, /hymnal/u);
-  for (const theme of ['classic', 'modern', 'minimal', 'cinematic']) {
+  for (const theme of ['classic', 'modern', 'minimal', 'cinematic', 'broadcast', 'glass', 'editorial', 'neon', 'ribbon', 'spotlight']) {
     assert.ok(fs.existsSync(path.join(ROOT, 'public', 'themes', theme, 'config.js')));
   }
 });

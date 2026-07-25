@@ -1,6 +1,6 @@
 {
   "name": "visualizador-biblia-obs",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "description": "Biblia Reina-Valera 1909 monolítica con panel de control y visualizador para OBS.",
   "type": "commonjs",

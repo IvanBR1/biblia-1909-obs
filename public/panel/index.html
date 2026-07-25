@@ -1,106 +1,531 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control Biblia · OBS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="/assets/css/panel.css">
-</head>
-<body>
-  <div class="main-container">
-    <header class="app-header">
-      <div class="brand">
-        <span class="brand-mark"><i class="fas fa-book-bible"></i></span>
-        <div><span class="panel-kicker">Control de transmisión</span><h1>Biblia OBS</h1></div>
-      </div>
-      <div class="header-actions">
-        <div class="database-status" id="database-status"><span class="status-dot"></span><span>Cargando Biblia…</span></div>
-        <button id="settings-button" class="icon-button" type="button" aria-label="Abrir configuración" aria-controls="settings-drawer" aria-expanded="false" title="Configuración"><i class="fas fa-sliders"></i></button>
-      </div>
-    </header>
-
-    <main class="workspace">
-      <section class="control-panel">
-        <div class="panel-heading">
-          <div><span class="step-number">01</span><div><h2>Elegir pasaje</h2><p>Reina-Valera 1909 · base local</p></div></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control Biblia · OBS</title>
+    <link
+      rel="preload"
+      href="/data/bible.db.json"
+      as="fetch"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Bebas+Neue&family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;600;700;800&family=Libre+Baskerville:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&family=Oswald:wght@400;600;700&family=Playfair+Display:wght@500;600;700&family=Roboto+Slab:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/assets/css/panel.css" />
+  </head>
+  <body class="loading">
+    <div class="main-container">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark"><i class="fas fa-book-bible"></i></span>
+          <div>
+            <span class="panel-kicker">Control de transmisión</span>
+            <h1>Biblia OBS</h1>
+          </div>
         </div>
-        <div class="form-container">
-          <div class="form-group">
-            <label for="book-search">Libro</label>
-            <div class="select-search-container">
-              <input type="text" id="book-search" class="select-with-search" placeholder="Buscar libro…" autocomplete="off">
-              <span class="search-icon"><i class="fas fa-search"></i></span>
-              <div id="book-dropdown" class="search-dropdown"></div>
+        <div class="header-actions">
+          <div class="database-status" id="database-status">
+            <span class="status-dot"></span><span>Cargando Biblia…</span>
+          </div>
+          <button
+            id="settings-button"
+            class="icon-button"
+            type="button"
+            aria-label="Abrir configuración"
+            aria-controls="settings-drawer"
+            aria-expanded="false"
+            title="Configuración"
+          >
+            <i class="fas fa-sliders"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="control-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="step-number">01</span>
+              <div>
+                <h2>Elegir pasaje</h2>
+                <p>Reina-Valera 1909 · base local</p>
+              </div>
             </div>
           </div>
-          <div class="field-row">
-            <div class="form-group"><label for="chapter-select">Capítulo</label><select id="chapter-select"></select></div>
-            <div class="form-group"><label for="verse-select">Versículo</label><select id="verse-select"></select></div>
-          </div>
-          <div class="form-group advanced-search">
-            <label for="text-search"><i class="fas fa-wand-magic-sparkles"></i> Búsqueda avanzada por texto</label>
-            <div class="select-search-container">
-              <input type="search" id="text-search" class="select-with-search" placeholder="Ej. en el principio crió Dios…" autocomplete="off">
-              <span class="search-icon"><i class="fas fa-magnifying-glass"></i></span>
-              <div id="text-dropdown" class="search-dropdown text-search-dropdown"></div>
+          <div class="form-container">
+            <div class="form-group">
+              <label for="book-search">Libro</label>
+              <div class="select-search-container">
+                <input
+                  type="text"
+                  id="book-search"
+                  class="select-with-search"
+                  placeholder="Buscar libro…"
+                  autocomplete="off"
+                />
+                <button
+                  id="book-search-clear"
+                  class="search-clear"
+                  type="button"
+                  aria-label="Limpiar búsqueda de libro"
+                  title="Limpiar búsqueda"
+                  hidden
+                >
+                  <i class="fas fa-xmark"></i>
+                </button>
+                <span class="search-icon"><i class="fas fa-search"></i></span>
+                <div id="book-dropdown" class="search-dropdown"></div>
+              </div>
             </div>
-            <small class="field-help">Escribe al menos 3 caracteres; no necesitas recordar la cita.</small>
+            <div class="field-row">
+              <div class="form-group">
+                <label for="chapter-select">Capítulo</label
+                ><select id="chapter-select"></select>
+              </div>
+              <div class="form-group">
+                <label for="verse-select">Versículo</label
+                ><select id="verse-select"></select>
+              </div>
+            </div>
+            <div class="form-group advanced-search">
+              <label for="text-search"
+                ><i class="fas fa-wand-magic-sparkles"></i> Búsqueda avanzada
+                por texto</label
+              >
+              <div class="select-search-container">
+                <input
+                  type="search"
+                  id="text-search"
+                  class="select-with-search"
+                  placeholder="Ej. en el principio crió Dios…"
+                  autocomplete="off"
+                />
+                <button
+                  id="text-search-clear"
+                  class="search-clear"
+                  type="button"
+                  aria-label="Limpiar búsqueda por texto"
+                  title="Limpiar búsqueda"
+                  hidden
+                >
+                  <i class="fas fa-xmark"></i>
+                </button>
+                <span class="search-icon"
+                  ><i class="fas fa-magnifying-glass"></i
+                ></span>
+                <div
+                  id="text-dropdown"
+                  class="search-dropdown text-search-dropdown"
+                ></div>
+              </div>
+              <small class="field-help"
+                >Escribe al menos 3 caracteres. Las palabras se encuentran
+                aunque las escribas en otro orden.</small
+              >
+            </div>
+            <div class="selection-meta" id="selection-meta">
+              <strong id="selected-reference">—</strong>
+              <span id="selected-book-meta"
+                >Selecciona un libro, capítulo y versículo</span
+              >
+            </div>
+            <div class="transport">
+              <button
+                id="prev-verse"
+                class="btn btn-primary"
+                type="button"
+                title="Versículo anterior"
+              >
+                <i class="fas fa-arrow-left"></i><span>Anterior</span>
+              </button>
+              <div class="line-counter">
+                <small>Versículo</small
+                ><strong id="verse-counter">— / —</strong>
+              </div>
+              <button
+                id="next-verse"
+                class="btn btn-primary"
+                type="button"
+                title="Versículo siguiente"
+              >
+                <span>Siguiente</span><i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+            <div class="broadcast-control">
+              <div>
+                <span class="broadcast-icon"
+                  ><i class="fas fa-tower-broadcast"></i></span
+                ><span
+                  ><strong>Salida en vivo</strong
+                  ><small>Mostrar este versículo en OBS</small></span
+                >
+              </div>
+              <label class="switch"
+                ><input type="checkbox" id="visibility-toggle" /><span
+                  class="slider"
+                ></span
+              ></label>
+            </div>
           </div>
-          <div class="selection-meta" id="selection-meta">
-            <strong id="selected-reference">—</strong>
-            <span id="selected-book-meta">Selecciona un libro, capítulo y versículo</span>
-          </div>
-          <div class="transport">
-            <button id="prev-verse" class="btn btn-primary" type="button" title="Versículo anterior"><i class="fas fa-arrow-left"></i><span>Anterior</span></button>
-            <div class="line-counter"><small>Versículo</small><strong id="verse-counter">— / —</strong></div>
-            <button id="next-verse" class="btn btn-primary" type="button" title="Versículo siguiente"><span>Siguiente</span><i class="fas fa-arrow-right"></i></button>
-          </div>
-          <div class="broadcast-control"><div><span class="broadcast-icon"><i class="fas fa-tower-broadcast"></i></span><span><strong>Salida en vivo</strong><small>Mostrar este versículo en OBS</small></span></div><label class="switch"><input type="checkbox" id="visibility-toggle"><span class="slider"></span></label></div>
-        </div>
-      </section>
+        </section>
 
-      <section class="preview-panel">
-        <div class="panel-heading preview-heading"><div><span class="step-number">02</span><div><h2>Vista previa</h2><p>Contenido listo para pantalla</p></div></div><span class="live-pill"><span></span> OBS</span></div>
-        <div class="preview-content">
-          <div id="preview-current" class="preview-verse current"><div class="verse-header"><span class="verse-ref">Actual</span><span class="part-badge">RVR09</span></div><div class="verse-text">Cargando Biblia…</div></div>
-          <div id="preview-next" class="preview-verse next"><div class="verse-header"><span class="verse-ref">Siguiente</span></div><div class="verse-text">—</div></div>
-        </div>
-        <div class="obs-url"><span><i class="fas fa-display"></i> URL del visor</span><code id="obs-url"></code></div>
-      </section>
-    </main>
-  </div>
-
-  <aside id="settings-drawer" class="settings-drawer" aria-hidden="true" aria-labelledby="settings-title">
-    <div class="settings-header"><div><span class="eyebrow">Personalización</span><h2 id="settings-title">Tema y estilo</h2></div><button id="settings-close" class="icon-button" type="button" aria-label="Cerrar configuración"><i class="fas fa-xmark"></i></button></div>
-    <div class="settings-body">
-      <section class="settings-section"><h4>Elige un tema</h4><div id="theme-list" class="theme-list" role="radiogroup" aria-label="Temas disponibles"></div></section>
-      <section class="settings-section settings-grid">
-        <h4>Texto y posición</h4>
-        <label for="horizontal-align">Posición horizontal</label><select id="horizontal-align"><option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option></select>
-        <label for="vertical-align">Posición vertical</label><select id="vertical-align"><option value="top">Arriba</option><option value="center">Centro</option><option value="bottom">Abajo</option></select>
-        <label for="font-family">Tipo de letra</label><select id="font-family"></select>
-        <div class="switch-container compact auto-fit-control"><span><strong>Ajustar al contenedor</strong><small>Calcula el mayor texto que cabe sin recortarlo</small></span><label class="switch"><input type="checkbox" id="auto-fit-toggle"><span class="slider"></span></label></div>
-        <label for="font-size">Tamaño manual <output for="font-size" id="font-size-value"></output></label><input type="range" id="font-size" min="18" max="96">
-        <label for="text-color">Color del texto</label><input type="color" id="text-color">
-        <label for="text-align">Alineación del texto</label><select id="text-align"><option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option></select>
-        <label for="line-height">Espaciado entre líneas <output for="line-height" id="line-height-value"></output></label><input type="range" id="line-height" min="0.8" max="2.5" step="0.1">
-      </section>
-      <section class="settings-section settings-grid">
-        <h4>Contenedor y contraste</h4>
-        <label for="background-color">Color del fondo</label><input type="color" id="background-color">
-        <label for="background-opacity">Opacidad del fondo <output for="background-opacity" id="background-opacity-value"></output></label><input type="range" id="background-opacity" min="0" max="100">
-        <div class="switch-container compact"><span class="switch-label">Mostrar fondo del tema</span><label class="switch"><input type="checkbox" id="background-toggle"><span class="slider"></span></label></div>
-        <label for="padding">Márgenes internos <output for="padding" id="padding-value"></output></label><input type="range" id="padding" min="0" max="120">
-        <label for="max-width">Ancho máximo <output for="max-width" id="max-width-value"></output></label><input type="range" id="max-width" min="320" max="1800" step="20">
-        <label for="text-effect">Efecto de contraste</label><select id="text-effect"><option value="none">Ninguno</option><option value="shadow">Sombra</option><option value="outline">Contorno</option><option value="contrast">Contraste</option></select>
-      </section>
-      <button id="reset-theme-settings" class="btn btn-secondary" type="button"><i class="fas fa-rotate-left"></i> Restaurar valores del tema</button>
+        <section class="preview-panel">
+          <div class="panel-heading preview-heading">
+            <div>
+              <span class="step-number">02</span>
+              <div>
+                <h2>Vista previa</h2>
+                <p>Contenido listo para pantalla</p>
+              </div>
+            </div>
+            <span class="live-pill"><span></span> OBS</span>
+          </div>
+          <div class="preview-content">
+            <div id="preview-current" class="preview-verse current">
+              <div class="verse-header">
+                <span class="verse-ref">Actual</span
+                ><span class="part-badge">RVR09</span>
+              </div>
+              <div class="verse-text">Cargando Biblia…</div>
+            </div>
+            <div id="preview-next" class="preview-verse next">
+              <div class="verse-header">
+                <span class="verse-ref">Siguiente</span>
+              </div>
+              <div class="verse-text">—</div>
+            </div>
+          </div>
+          <div class="obs-url">
+            <span><i class="fas fa-display"></i> URL del visor</span
+            ><code id="obs-url"></code>
+          </div>
+        </section>
+      </main>
     </div>
-  </aside>
-  <div id="settings-scrim" class="settings-scrim" hidden></div>
-  <script src="/themes/index.js"></script>
-  <script src="/assets/js/control.js"></script>
-</body>
+
+    <aside
+      id="settings-drawer"
+      class="settings-drawer"
+      aria-hidden="true"
+      aria-labelledby="settings-title"
+    >
+      <div class="settings-header">
+        <div>
+          <span class="eyebrow">Personalización</span>
+          <h2 id="settings-title">Apariencia del visualizador</h2>
+          <p>
+            Los cambios se reflejan al instante en la salida y vista previa.
+          </p>
+        </div>
+        <button
+          id="settings-close"
+          class="icon-button"
+          type="button"
+          aria-label="Cerrar configuración"
+        >
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <div class="settings-body">
+        <section class="settings-section">
+          <div class="settings-section-heading">
+            <span>01</span>
+            <div>
+              <h3>Estilo</h3>
+              <p>Elige la apariencia general del pasaje.</p>
+            </div>
+          </div>
+          <div
+            id="theme-list"
+            class="theme-list"
+            role="radiogroup"
+            aria-label="Temas disponibles"
+          ></div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-heading">
+            <span>02</span>
+            <div>
+              <h3>Fondo</h3>
+              <p>Define el lienzo detrás del versículo.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label for="background-type">Tipo de fondo</label
+            ><select id="background-type">
+              <option value="color">Color</option>
+              <option value="image">Imagen</option>
+            </select>
+            <div id="background-color-fields">
+              <label for="background-color">Color</label
+              ><input id="background-color" type="color" /><label
+                for="background-opacity"
+                >Opacidad
+                <output
+                  for="background-opacity"
+                  id="background-opacity-value"
+                ></output></label
+              ><input type="range" id="background-opacity" min="0" max="100" />
+            </div>
+            <div id="background-media-fields" hidden>
+              <input
+                id="background-input"
+                class="file-input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+              />
+              <button
+                id="background-file-button"
+                class="upload-control"
+                type="button"
+              >
+                <span class="upload-empty">Elegir o arrastrar imagen</span
+                ><span class="upload-loaded"
+                  ><b>✓</b
+                  ><span id="background-file-name">Archivo cargado</span></span
+                ><span class="upload-remove">Quitar imagen</span>
+              </button>
+              <div class="fit-row">
+                <div>
+                  <label for="background-fit">Ajuste</label
+                  ><select id="background-fit">
+                    <option value="cover">Rellenar</option>
+                    <option value="stretch">Escalar</option>
+                    <option value="contain">Proporción real</option>
+                  </select>
+                </div>
+                <div class="anchor-wrap">
+                  <button
+                    id="anchor-button"
+                    class="ruler-button"
+                    type="button"
+                    aria-label="Elegir parte visible de la imagen"
+                    aria-expanded="false"
+                    title="Parte visible"
+                  >
+                    <i class="fas fa-ruler-combined"></i>
+                  </button>
+                  <div id="anchor-popover" class="anchor-popover" hidden>
+                    <span>Parte visible</span>
+                    <div class="anchor-grid" role="radiogroup"></div>
+                  </div>
+                  <input id="background-position" type="hidden" />
+                </div>
+              </div>
+              <div class="media-options">
+                <div class="switch-row">
+                  <span>Animar imagen</span
+                  ><label class="switch"
+                    ><input type="checkbox" id="image-animation" /><span
+                      class="slider"
+                    ></span
+                  ></label>
+                </div>
+                <label for="background-overlay-opacity"
+                  >Oscurecer imagen
+                  <output
+                    for="background-overlay-opacity"
+                    id="background-overlay-opacity-value"
+                  ></output></label
+                ><input
+                  type="range"
+                  id="background-overlay-opacity"
+                  min="0"
+                  max="90"
+                />
+              </div>
+            </div>
+            <div class="switch-row">
+              <span>Mostrar fondo</span
+              ><label class="switch"
+                ><input type="checkbox" id="background-toggle" /><span
+                  class="slider"
+                ></span
+              ></label>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-heading">
+            <span>03</span>
+            <div>
+              <h3>Tipografía</h3>
+              <p>Ajusta la lectura del pasaje.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label for="font-family">Tipo de letra</label
+            ><select id="font-family"></select>
+            <div class="paired-controls">
+              <div>
+                <label for="font-weight">Grosor</label
+                ><select id="font-weight">
+                  <option value="400">Regular</option>
+                  <option value="500">Medio</option>
+                  <option value="600">Seminegrita</option>
+                  <option value="700">Negrita</option>
+                  <option value="800">Extra negrita</option>
+                </select>
+              </div>
+              <div>
+                <label for="text-color">Color del texto</label
+                ><input type="color" id="text-color" />
+              </div>
+            </div>
+            <div class="switch-row auto-fit-control">
+              <span
+                ><strong>Ajustar al contenedor</strong
+                ><small
+                  >Conserva el tamaño del tema y sólo lo reduce si hace
+                  falta.</small
+                ></span
+              ><label class="switch"
+                ><input type="checkbox" id="auto-fit-toggle" /><span
+                  class="slider"
+                ></span
+              ></label>
+            </div>
+            <label for="font-size"
+              >Tamaño manual
+              <output for="font-size" id="font-size-value"></output></label
+            ><input type="range" id="font-size" min="18" max="96" />
+            <div class="paired-controls">
+              <div>
+                <label for="text-align">Alineación</label
+                ><select id="text-align">
+                  <option value="left">Izquierda</option>
+                  <option value="center">Centro</option>
+                  <option value="right">Derecha</option>
+                </select>
+              </div>
+              <div>
+                <label for="text-effect">Contraste</label
+                ><select id="text-effect">
+                  <option value="none">Ninguno</option>
+                  <option value="shadow">Sombra</option>
+                  <option value="outline">Contorno</option>
+                  <option value="contrast">Contraste</option>
+                </select>
+              </div>
+            </div>
+            <label for="line-height"
+              >Espaciado entre líneas
+              <output for="line-height" id="line-height-value"></output></label
+            ><input
+              type="range"
+              id="line-height"
+              min="0.8"
+              max="2.5"
+              step="0.1"
+            />
+            <label for="letter-spacing"
+              >Espaciado entre letras
+              <output
+                for="letter-spacing"
+                id="letter-spacing-value"
+              ></output></label
+            ><input
+              type="range"
+              id="letter-spacing"
+              min="-2"
+              max="12"
+              step="0.5"
+            />
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-heading">
+            <span>04</span>
+            <div>
+              <h3>Composición</h3>
+              <p>Ubica el texto y controla su espacio.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <div class="paired-controls">
+              <div>
+                <label for="horizontal-align">Horizontal</label
+                ><select id="horizontal-align">
+                  <option value="left">Izquierda</option>
+                  <option value="center">Centro</option>
+                  <option value="right">Derecha</option>
+                </select>
+              </div>
+              <div>
+                <label for="vertical-align">Vertical</label
+                ><select id="vertical-align">
+                  <option value="top">Arriba</option>
+                  <option value="center">Centro</option>
+                  <option value="bottom">Abajo</option>
+                </select>
+              </div>
+            </div>
+            <label for="max-width"
+              >Ancho máximo
+              <output for="max-width" id="max-width-value"></output></label
+            ><input
+              type="range"
+              id="max-width"
+              min="320"
+              max="1800"
+              step="20"
+            />
+            <label for="padding"
+              >Márgenes internos
+              <output for="padding" id="padding-value"></output></label
+            ><input type="range" id="padding" min="0" max="120" />
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-section-heading">
+            <span>05</span>
+            <div>
+              <h3>Movimiento</h3>
+              <p>Configura la entrada del pasaje en escena.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <label for="transition">Animación de entrada</label
+            ><select id="transition">
+              <option value="fade">Fundido</option>
+              <option value="slide">Deslizar</option>
+              <option value="scale">Escala</option>
+              <option value="reveal">Revelado</option>
+              <option value="flip">Giro suave</option>
+            </select>
+            <label for="transition-duration"
+              >Duración
+              <output
+                for="transition-duration"
+                id="transition-duration-value"
+              ></output></label
+            ><input
+              type="range"
+              id="transition-duration"
+              min="150"
+              max="1800"
+              step="50"
+            />
+          </div>
+        </section>
+        <button
+          id="reset-theme-settings"
+          class="btn btn-secondary full"
+          type="button"
+        >
+          <i class="fas fa-rotate-left"></i> Restaurar ajustes
+        </button>
+      </div>
+    </aside>
+    <div id="settings-scrim" class="settings-scrim" hidden></div>
+    <script src="/themes/index.js"></script>
+    <script src="/assets/js/control.js"></script>
+  </body>
 </html>

@@ -3,8 +3,9 @@
  */
 window.BibleThemeSchema = {
     settings: [
-        'horizontalAlign', 'verticalAlign', 'autoFit', 'fontFamily', 'fontSize', 'textColor',
-        'backgroundColor', 'backgroundOpacity', 'backgroundVisible',
-        'textAlign', 'lineHeight', 'padding', 'maxWidth', 'textEffect'
+        'horizontalAlign', 'verticalAlign', 'autoFit', 'fontFamily', 'fontWeight', 'fontSize', 'textColor',
+        'backgroundColor', 'backgroundOpacity', 'cardBackgroundColor', 'cardBackgroundOpacity', 'backgroundVisible',
+        'backgroundType', 'backgroundFit', 'backgroundPosition', 'backgroundOverlayOpacity', 'imageFileName', 'imageAssetVersion', 'imageAnimation',
+        'textAlign', 'lineHeight', 'letterSpacing', 'padding', 'maxWidth', 'textEffect', 'transition', 'transitionDuration'
     ]
 };
