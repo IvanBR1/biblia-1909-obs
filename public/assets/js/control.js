@@ -6,6 +6,8 @@ async function waitForThemes() {
 }
 const DATABASE_URL = "/data/bible.db.json";
 const ASSET_DB = "bibleObsAssets";
+const HISTORY_STORAGE_KEY = "biblePassageHistory";
+const HISTORY_LIMIT = 20;
 const $ = (id) => document.getElementById(id);
 
 // 1. Objetos vacíos: se llenan dentro de DOMContentLoaded cuando el DOM ya existe
@@ -27,6 +29,7 @@ let themeSettings = { ...(window.BibleThemeDefaults || {}) };
 let searchTimer;
 let databaseLoadPromise;
 let uiReady = false;
+let passageHistory = [];
 const backgroundAnchors = [
   ["left top", "↖"],
   ["center top", "↑"],
@@ -60,6 +63,64 @@ function normalizeSearch(value) {
 
 function setClearButton(input, button) {
   button.hidden = !input.value;
+}
+
+function savePassageHistory() {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(passageHistory));
+  } catch {}
+}
+
+function recordPassageHistory() {
+  const { verse } = currentPassage();
+  if (!verse) return;
+  const item = {
+    bookId: currentBook,
+    chapter: currentChapter,
+    verse: currentVerse,
+    reference: verse.reference,
+  };
+  passageHistory = [
+    item,
+    ...passageHistory.filter(
+      (entry) =>
+        entry.bookId !== item.bookId ||
+        entry.chapter !== item.chapter ||
+        entry.verse !== item.verse,
+    ),
+  ].slice(0, HISTORY_LIMIT);
+  savePassageHistory();
+}
+
+function renderPassageHistory() {
+  const dropdown = elements.bookHistoryDropdown;
+  dropdown.innerHTML = passageHistory.length
+    ? passageHistory
+        .map(
+          (item, index) =>
+            `<div class="search-dropdown-item${index === 0 ? " active" : ""}" data-index="${index}"><div class="verse-result"><strong>${escapeHtml(item.reference)}</strong><small>Pasaje visualizado</small></div></div>`,
+        )
+        .join("")
+    : '<div class="no-results">Aún no hay pasajes en el historial</div>';
+  dropdown.querySelectorAll(".search-dropdown-item").forEach((node) => {
+    node.addEventListener("click", () => {
+      const item = passageHistory[Number(node.dataset.index)];
+      if (item)
+        selectPassage(item.bookId, item.chapter, item.verse, {
+          recordHistory: true,
+        });
+      togglePassageHistory(false);
+    });
+  });
+}
+
+function togglePassageHistory(open) {
+  elements.bookHistoryDropdown.classList.toggle("visible", open);
+  elements.bookHistoryButton.setAttribute("aria-expanded", String(open));
+  if (open) {
+    elements.bookDropdown.classList.remove("visible");
+    renderPassageHistory();
+  }
 }
 
 function setDatabaseStatus(state, message) {
@@ -297,6 +358,7 @@ function selectPassage(
   if (isVisible) sendCurrentVerse();
   if (options.closeTextSearch)
     elements.textDropdown.classList.remove("visible");
+  if (options.recordHistory) recordPassageHistory();
   saveState();
 }
 
@@ -326,7 +388,9 @@ function renderBookResults(items) {
     .querySelectorAll(".search-dropdown-item")
     .forEach((node) => {
       node.addEventListener("click", () =>
-        selectPassage(bookResults[Number(node.dataset.index)].id),
+        selectPassage(bookResults[Number(node.dataset.index)].id, 1, 1, {
+          recordHistory: true,
+        }),
       );
     });
   elements.bookDropdown.classList.add("visible");
@@ -369,6 +433,7 @@ function renderTextResults(items, query) {
           const result = textResults[Number(node.dataset.index)];
           selectPassage(result.bookId, result.chapter, result.verse, {
             closeTextSearch: true,
+            recordHistory: true,
           });
         });
       });
@@ -702,6 +767,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       bookSearch: $("book-search"),
       bookSearchClear: $("book-search-clear"),
       bookDropdown: $("book-dropdown"),
+      bookHistoryButton: $("book-history-button"),
+      bookHistoryDropdown: $("book-history-dropdown"),
       chapter: $("chapter-select"),
       verse: $("verse-select"),
       textSearch: $("text-search"),
@@ -754,6 +821,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       saved = JSON.parse(localStorage.getItem("bibleControlState") || "{}");
     } catch {}
+    try {
+      const history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || "[]");
+      passageHistory = Array.isArray(history) ? history.slice(0, HISTORY_LIMIT) : [];
+    } catch {}
     selectedThemeId = window.BibleThemeRegistry.has(saved.themeId)
       ? saved.themeId
       : "modern";
@@ -781,16 +852,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.bookSearch.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && bookResults[0]) {
         event.preventDefault();
-        selectPassage(bookResults[0].id);
+        selectPassage(bookResults[0].id, 1, 1, { recordHistory: true });
       }
       if (event.key === "Escape")
         elements.bookDropdown.classList.remove("visible");
     });
     elements.chapter.addEventListener("change", () =>
-      selectPassage(currentBook, Number(elements.chapter.value), 1),
+      selectPassage(currentBook, Number(elements.chapter.value), 1, {
+        recordHistory: true,
+      }),
     );
     elements.verse.addEventListener("change", () =>
-      selectPassage(currentBook, currentChapter, Number(elements.verse.value)),
+      selectPassage(currentBook, currentChapter, Number(elements.verse.value), {
+        recordHistory: true,
+      }),
+    );
+    elements.bookHistoryButton.addEventListener("click", () =>
+      togglePassageHistory(
+        !elements.bookHistoryDropdown.classList.contains("visible"),
+      ),
     );
     elements.textSearch.addEventListener("input", () => {
       setClearButton(elements.textSearch, elements.textSearchClear);
@@ -822,6 +902,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const result = textResults[0];
         selectPassage(result.bookId, result.chapter, result.verse, {
           closeTextSearch: true,
+          recordHistory: true,
         });
       }
       if (event.key === "Escape")
@@ -830,9 +911,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.addEventListener("click", (event) => {
       if (
         !elements.bookSearch.contains(event.target) &&
-        !elements.bookDropdown.contains(event.target)
+        !elements.bookDropdown.contains(event.target) &&
+        !elements.bookHistoryButton.contains(event.target) &&
+        !elements.bookHistoryDropdown.contains(event.target)
       )
         elements.bookDropdown.classList.remove("visible");
+      if (
+        !elements.bookSearch.contains(event.target) &&
+        !elements.bookHistoryButton.contains(event.target) &&
+        !elements.bookHistoryDropdown.contains(event.target)
+      )
+        togglePassageHistory(false);
       if (
         !elements.textSearch.contains(event.target) &&
         !elements.textDropdown.contains(event.target)

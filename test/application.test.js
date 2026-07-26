@@ -92,6 +92,8 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(presentation, /Versión 2\.1\.1/u);
   assert.match(presentation, /Iván Bermúdez Regino/u);
   assert.match(panel, /id="text-search"/u);
+  assert.match(panel, /id="book-history-button"/u);
+  assert.match(panel, /id="book-history-dropdown"/u);
   assert.match(panel, /id="panel-appearance"/u);
   assert.match(panel, /value="compact"/u);
   assert.match(panel, /value="minimal"/u);
@@ -99,6 +101,8 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(panel, /Personalización/u);
   assert.match(control, /\/data\/bible\.db\.json/u);
   assert.match(control, /searchableVerses/u);
+  assert.match(control, /HISTORY_LIMIT = 20/u);
+  assert.match(control, /recordHistory: true/u);
   assert.match(control, /selectPassage\(result\.bookId, result\.chapter, result\.verse/u);
   assert.match(runtime, /bibleDisplayCommand/u);
   assert.match(runtime, /setPassageContent/u);
