@@ -1,6 +1,6 @@
 window.BibleThemeRegistry.register({
     id: 'modern',
-    name: 'Modern',
+    name: 'Libro moderno',
     description: 'Composición editorial centrada.',
     preview: '/themes/modern/preview.html',
     fonts: window.BibleFontCatalog,

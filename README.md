@@ -1,6 +1,6 @@
 # Visualizador de Biblia para OBS · v2.1.1
 
-Monolito local para buscar y presentar versículos de la Biblia Reina-Valera 1909 en una fuente de navegador de OBS. Incluye la base bíblica, el panel, el visualizador y cuatro temas; no consulta una API externa.
+Monolito local para buscar y presentar versículos de la Biblia Reina-Valera 1909 en una fuente de navegador de OBS. Incluye la base bíblica, el panel, el visualizador y diez temas; no consulta una API externa.
 
 ## Requisitos y ejecución
 
@@ -27,7 +27,7 @@ En OBS se recomienda una fuente Navegador de 1920 × 1080.
 - Selección de cualquier resultado para cargar automáticamente su libro, capítulo y versículo.
 - Vista previa del versículo actual y del siguiente.
 - Mostrar u ocultar la salida en OBS.
-- Temas Clásico, Libro moderno, Minimalista y Cinematográfico.
+- Temas Clásico, Libro moderno, Minimalista, Cinematográfico, Transmisión, Cristal, Editorial, Neón, Cinta y Reflector.
 - Personalización de posición, autoajuste, tipografía, colores, fondo, márgenes y contraste.
 - Persistencia local de la selección y los ajustes.
 
