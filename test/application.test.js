@@ -92,6 +92,9 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(presentation, /Versión 2\.1\.1/u);
   assert.match(presentation, /Iván Bermúdez Regino/u);
   assert.match(panel, /id="text-search"/u);
+  assert.match(panel, /id="panel-appearance"/u);
+  assert.match(panel, /value="compact"/u);
+  assert.match(panel, /value="minimal"/u);
   assert.match(panel, /id="anchor-popover"/u);
   assert.match(panel, /Apariencia del visualizador/u);
   assert.match(control, /\/data\/bible\.db\.json/u);

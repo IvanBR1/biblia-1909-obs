@@ -239,6 +239,21 @@
         </button>
       </div>
       <div class="settings-body">
+        <section class="settings-section panel-appearance-section">
+          <div class="settings-section-heading">
+            <span>00</span>
+            <div>
+              <h3>Panel</h3>
+              <p>Optimiza el espacio disponible en OBS.</p>
+            </div>
+          </div>
+          <label for="panel-appearance">Apariencia general</label>
+          <select id="panel-appearance">
+            <option value="normal">Normal</option>
+            <option value="compact">Compacto</option>
+            <option value="minimal">Minimalista</option>
+          </select>
+        </section>
         <section class="settings-section">
           <div class="settings-section-heading">
             <span>01</span>
@@ -532,5 +547,6 @@
     <div id="settings-scrim" class="settings-scrim" hidden></div>
     <script src="/themes/index.js"></script>
     <script src="/assets/js/control.js"></script>
+    <script src="/assets/js/panel-appearance.js"></script>
   </body>
 </html>
