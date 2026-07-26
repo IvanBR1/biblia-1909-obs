@@ -96,7 +96,7 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(panel, /value="compact"/u);
   assert.match(panel, /value="minimal"/u);
   assert.match(panel, /id="anchor-popover"/u);
-  assert.match(panel, /Apariencia del visualizador/u);
+  assert.match(panel, /Personalización/u);
   assert.match(control, /\/data\/bible\.db\.json/u);
   assert.match(control, /searchableVerses/u);
   assert.match(control, /selectPassage\(result\.bookId, result\.chapter, result\.verse/u);

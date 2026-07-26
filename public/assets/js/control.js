@@ -619,7 +619,7 @@ function renderThemeCards() {
     .map(
       (theme) => `
     <button type="button" class="theme-card${theme.id === selectedThemeId ? " selected" : ""}" data-theme="${theme.id}" role="radio" aria-checked="${theme.id === selectedThemeId}">
-      <span class="theme-swatch theme-swatch-${theme.id}"></span><span><strong>${theme.name}</strong><small>${theme.description}</small></span>
+      <span class="theme-swatch theme-swatch-${theme.id}"></span><span><strong>${theme.name}</strong></span>
     </button>`,
     )
     .join("");
