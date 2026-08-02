@@ -69,7 +69,7 @@ test('sirve presentación, panel, visualizador y base desde un solo proceso', as
 
   const panel = await get('/panel/');
   assert.equal(panel.status, 200);
-  assert.match(await panel.text(), /Búsqueda avanzada por texto/u);
+  assert.match(await panel.text(), /Búsqueda avanzada\s+por texto/u);
 
   const viewer = await get('/visualizador/');
   assert.equal(viewer.status, 200);
@@ -92,6 +92,8 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(presentation, /Versión 2\.1\.1/u);
   assert.match(presentation, /Iván Bermúdez Regino/u);
   assert.match(panel, /id="text-search"/u);
+  assert.doesNotMatch(panel, /type="search"/u);
+  assert.equal((panel.match(/class="search-clear"/gu) || []).length, 2);
   assert.match(panel, /id="book-history-button"/u);
   assert.match(panel, /id="book-history-dropdown"/u);
   assert.match(panel, /id="panel-appearance"/u);
