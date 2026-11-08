@@ -357,7 +357,7 @@ body[data-panel-appearance="minimal"] .theme-card { grid-template-columns: 1fr; 
 body[data-panel-appearance="minimal"] .search-icon { display: block !important; }
 body[data-panel-appearance="minimal"] .status-dot { display: inline-block !important; }
 
-.history-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border-bottom: 1px solid var(--surface-3); }
+.history-toolbar { position: sticky; top: 0; z-index: 1; background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border-bottom: 1px solid var(--surface-3); }
 .history-toolbar button { background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 6px; padding: 5px 8px; cursor: pointer; }
 .history-row { display: flex; align-items: stretch; }
 .history-select { flex: 1; min-width: 0; text-align: left; color: inherit; background: transparent; border: 0; font: inherit; }

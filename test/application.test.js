@@ -225,3 +225,32 @@ test('busqueda tolera orden, palabras omitidas y errores y prioriza coincidencia
   assert.equal(references('Miserable de mi Romanos')[0], 'Romanos 7:24');
   assert.ok(references('Corintios')[0].includes('Corintios'));
 });
+
+test('historial muestra solo el cuerpo del versiculo sin titulos ni notas de cartas', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/js/control.js'), 'utf8');
+  const context = vm.createContext({ window: { BibleThemeDefaults: {} }, document: { addEventListener() {} } });
+  vm.runInContext(source.replace(/databaseLoadPromise = loadDatabase\(\)\.catch\([\s\S]*?\n\}\);/u, ''), context);
+  context.fullBible = JSON.parse(fs.readFileSync(PUBLIC_DATABASE_PATH, 'utf8'));
+  vm.runInContext('bookById = new Map(fullBible.books.map(book => [book.id, book]));', context);
+  const excerpt = item => {
+    context.historyItem = item;
+    return vm.runInContext('historyVerseText(historyItem)', context);
+  };
+  const psalm = excerpt({ bookId: 'PSA', chapter: 3, verse: 1 });
+  assert.ok(psalm.startsWith('\u00a1OH Jehov\u00e1'));
+  assert.doesNotMatch(psalm, /Salmo de David|Absalom|\[1\]/u);
+  for (const bookId of ['ROM', '1CO', '2TI', 'PHM']) {
+    const book = context.fullBible.books.find(book => book.id === bookId);
+    const chapter = book.chapters.at(-1);
+    const verse = chapter.verses.at(-1);
+    assert.ok(verse.note.length);
+    const text = excerpt({ bookId, chapter: chapter.number, verse: verse.number });
+    assert.equal(text, verse.content);
+    assert.ok(!text.includes(verse.note));
+  }
+  const headed = context.fullBible.books.flatMap(book => book.chapters.flatMap(chapter => chapter.verses
+    .filter(verse => verse.heading).map(verse => ({ bookId: book.id, chapter: chapter.number, verse: verse.number, original: verse }))));
+  assert.ok(headed.length);
+  for (const item of headed) assert.equal(excerpt(item), item.original.content.replace(/\s+/gu, ' ').trim());
+  assert.equal(excerpt({ bookId: 'missing', chapter: 1, verse: 1 }), '');
+});

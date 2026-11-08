@@ -127,11 +127,26 @@ function clearPassageHistory(all = false) {
   refreshPassageHistory();
 }
 
+function historyVerseText(item) {
+  const verse = bookById.get(item.bookId)?.chapters
+    .find(chapter => chapter.number === item.chapter)?.verses
+    .find(verse => verse.number === item.verse);
+  if (!verse) return "";
+  // Imported headings and epistle notes live in separate fields. Psalm
+  // superscriptions still precede the numbered verse in content.
+  const content = String(verse.content || "");
+  const psalmVerse = /^Salmos\s+\d+:/u.test(verse.reference || "") &&
+    content.match(/^(.{1,420}?)\s*\[\d+\]\s+([\s\S]+)$/u);
+  return (psalmVerse ? psalmVerse[2] : content)
+    .replace(/^\s*\[\d+\]\s*/u, "")
+    .replace(/\s+/gu, " ").trim();
+}
+
 function renderPassageHistory() {
   const dropdown = elements.bookHistoryDropdown;
   dropdown.innerHTML = `<div class="history-toolbar"><strong>Historial y guardados</strong><button type="button" id="clear-passage-history" aria-label="Limpiar historial" title="Limpiar historial"><i class="fas fa-trash-can" aria-hidden="true"></i></button></div>` + (passageHistory.length
     ? passageHistory.map((item, index) =>
-      `<div class="history-row"><button type="button" class="search-dropdown-item history-select" data-index="${index}"><span class="verse-result"><strong>${escapeHtml(item.reference)}</strong><small>${escapeHtml(bookById.get(item.bookId)?.chapters.find(chapter => chapter.number === item.chapter)?.verses.find(verse => verse.number === item.verse)?.content || "")}</small></span></button><button type="button" class="history-bookmark" data-index="${index}" aria-pressed="${Boolean(item.bookmarked)}" aria-label="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}: ${escapeHtml(item.reference)}" title="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}"><i class="fas fa-bookmark" aria-hidden="true"></i></button></div>`
+      `<div class="history-row"><button type="button" class="search-dropdown-item history-select" data-index="${index}"><span class="verse-result"><strong>${escapeHtml(item.reference)}</strong><small>${escapeHtml(historyVerseText(item))}</small></span></button><button type="button" class="history-bookmark" data-index="${index}" aria-pressed="${Boolean(item.bookmarked)}" aria-label="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}: ${escapeHtml(item.reference)}" title="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}"><i class="fas fa-bookmark" aria-hidden="true"></i></button></div>`
     ).join("")
     : '<div class="no-results">Aún no hay pasajes en el historial</div>');
   dropdown.querySelector("#clear-passage-history").addEventListener("click", () => {
