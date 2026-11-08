@@ -74,7 +74,7 @@ select:focus, input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .search-clear:hover, .search-clear:focus-visible { outline: none; background: var(--surface-3); color: #fff; }
 .search-dropdown { display: none; position: absolute; z-index: 1000; top: calc(100% + 5px); left: 0; right: 0; max-height: 310px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); box-shadow: 0 16px 35px rgba(0,0,0,.38); }
 .search-dropdown.visible { display: block; }
-.history-dropdown { max-height: 270px; }
+.history-dropdown { max-height: 270px; overflow-x: hidden; clip-path: inset(0 round 10px); }
 .search-dropdown-item { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.045); cursor: pointer; transition: .14s ease; }
 .search-dropdown-item:last-child { border-bottom: 0; }
 .search-dropdown-item:hover, .search-dropdown-item.active { background: var(--surface-3); }
@@ -359,7 +359,7 @@ body[data-panel-appearance="minimal"] .status-dot { display: inline-block !impor
 
 .history-toolbar { position: sticky; top: 0; z-index: 1; background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border-bottom: 1px solid var(--surface-3); }
 .history-toolbar button { background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 6px; padding: 5px 8px; cursor: pointer; }
-.history-row { display: flex; align-items: stretch; }
+.history-row { display: flex; align-items: stretch; overflow: hidden; }
 .history-select { flex: 1; min-width: 0; text-align: left; color: inherit; background: transparent; border: 0; font: inherit; }
 .history-bookmark, .passage-bookmark { border: 0; border-radius: 6px; background: transparent; color: #9da7b5; cursor: pointer; padding: 10px; }
 .history-bookmark[aria-pressed="true"], .passage-bookmark[aria-pressed="true"] { color: #e6b85c; background: var(--surface-3); }
@@ -379,4 +379,4 @@ body[data-panel-appearance="minimal"] .status-dot { display: inline-block !impor
 
 .history-select .verse-result { min-width: 0; }
 .history-select .verse-result small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: unset; }
-.history-bookmark { flex-shrink: 0; }
+.history-bookmark { flex-shrink: 0; align-self: stretch; border-radius: 0; }
