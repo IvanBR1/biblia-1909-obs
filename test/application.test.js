@@ -88,8 +88,8 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   const runtime = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'preview-runtime.js'), 'utf8');
   const commonStyles = fs.readFileSync(path.join(ROOT, 'public', 'themes', 'shared', 'commonStyles.css'), 'utf8');
 
-  assert.equal(packageJson.version, '2.1.1');
-  assert.match(presentation, /Versión 2\.1\.1/u);
+  assert.equal(packageJson.version, '2.1.2');
+  assert.match(presentation, /Versión 2\.1\.2/u);
   assert.match(presentation, /Iván Bermúdez Regino/u);
   assert.match(panel, /id="text-search"/u);
   assert.doesNotMatch(panel, /type="search"/u);
@@ -103,8 +103,8 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   assert.match(panel, /Personalización/u);
   assert.match(control, /\/data\/bible\.db\.json/u);
   assert.match(control, /searchableVerses/u);
-  assert.match(control, /HISTORY_LIMIT = 20/u);
-  assert.match(control, /recordHistory: true/u);
+  assert.doesNotMatch(control, /HISTORY_LIMIT/u);
+  assert.match(panel, /id="passage-bookmark-button"/u);
   assert.match(control, /selectPassage\(result\.bookId, result\.chapter, result\.verse/u);
   assert.match(runtime, /bibleDisplayCommand/u);
   assert.match(runtime, /setPassageContent/u);
@@ -116,4 +116,112 @@ test('incluye versión, datos del desarrollador, temas y búsqueda local', () =>
   for (const theme of ['classic', 'modern', 'minimal', 'cinematic', 'broadcast', 'glass', 'editorial', 'neon', 'ribbon', 'spotlight']) {
     assert.ok(fs.existsSync(path.join(ROOT, 'public', 'themes', theme, 'config.js')));
   }
+});
+const vm = require('node:vm');
+
+test('historial guarda emisiones sin límite y conserva marcadores al limpiar', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/js/control.js'), 'utf8');
+  const storage = new Map();
+  const context = vm.createContext({
+    window: { BibleThemeDefaults: {} },
+    document: { addEventListener() {} },
+    localStorage: { setItem(key, value) { storage.set(key, value); } },
+  });
+  vm.runInContext(source.replace(/databaseLoadPromise = loadDatabase\(\)\.catch\([\s\S]*?\n\}\);/u, ""), context);
+  vm.runInContext(`
+    database = { translation: { abbreviation: 'RVR09' } };
+    bookById.set('GEN', { id: 'GEN', chapters: [{ number: 1, verses: Array.from({length: 30}, (_, i) => ({ number: i + 1, reference: 'Génesis 1:' + (i + 1), content: 'Texto' })) }] });
+    currentBook = 'GEN'; currentChapter = 1; currentVerse = 1;
+    sendCurrentVerse();
+  `, context);
+  assert.equal(storage.has('biblePassageHistory'), false);
+  vm.runInContext(`
+    togglePassageBookmark();
+    isVisible = true;
+    for (currentVerse = 2; currentVerse <= 30; currentVerse++) sendCurrentVerse();
+  `, context);
+  let history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 30);
+  assert.equal(history[0].verse, 30);
+  assert.equal(history.find(entry => entry.verse === 1).presented, false);
+  vm.runInContext('clearPassageHistory();', context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 1);
+  assert.equal(history[0].verse, 1);
+  assert.equal(history[0].bookmarked, true);
+  vm.runInContext('currentVerse = 1; togglePassageBookmark();', context);
+  assert.deepEqual(JSON.parse(storage.get('biblePassageHistory')), []);
+  vm.runInContext('sendCurrentVerse(); sendCurrentVerse();', context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 1);
+  assert.equal(history[0].presented, true);
+  vm.runInContext(`
+    books = [...bookById.values()];
+    populateChapters = () => { currentChapter = 1; };
+    populateVerses = number => { currentVerse = number; };
+    updatePreview = () => {};
+    elements.bookSearch = {};
+    elements.bookSearchClear = {};
+    elements.bookDropdown = { classList: { remove() {} } };
+    navigate(1);
+    sendCurrentVerse();
+  `, context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 1);
+  vm.runInContext('togglePassageBookmark();', context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 2);
+  assert.equal(history[0].verse, 2);
+  assert.equal(history[0].bookmarked, true);
+  vm.runInContext('clearPassageHistory(true);', context);
+  assert.deepEqual(JSON.parse(storage.get('biblePassageHistory')), []);
+  vm.runInContext(`
+    navigate(1);
+    setPresentationVisible(false);
+    navigate(1);
+    setPresentationVisible(true);
+  `, context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 1);
+  assert.equal(history[0].verse, 4);
+  vm.runInContext('navigate(1); sendCurrentVerse();', context);
+  assert.equal(JSON.parse(storage.get('biblePassageHistory')).length, 1);
+  vm.runInContext("selectPassage('GEN', 1, 10);", context);
+  history = JSON.parse(storage.get('biblePassageHistory'));
+  assert.equal(history.length, 2);
+  assert.equal(history[0].verse, 10);
+
+});
+
+test('busqueda tolera orden, palabras omitidas y errores y prioriza coincidencias', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/js/control.js'), 'utf8');
+  const context = vm.createContext({ window: { BibleThemeDefaults: {} }, document: { addEventListener() {} } });
+  vm.runInContext(source.replace(/databaseLoadPromise = loadDatabase\(\)\.catch\([\s\S]*?\n\}\);/u, ''), context);
+  context.fixture = [
+    { reference: 'A', content: 'En el principio crio Dios los cielos y la tierra' },
+    { reference: 'B', content: 'Dios mira la tierra' },
+    { reference: 'C', content: 'En el principia crio Dios los cielos' },
+    { reference: 'D', content: 'El amor permanece para siempre' },
+  ];
+  vm.runInContext('searchableVerses = fixture.map(verse => ({ ...verse, searchWords: normalizeSearch(verse.content).split(" ") }));', context);
+  const references = query => Array.from(vm.runInContext(`findBibleMatches(${JSON.stringify(query)}).map(item => item.reference)`, context));
+  assert.equal(references('tierra principio Dios')[0], 'A');
+  assert.equal(references('principio Dios cielos')[0], 'A');
+  assert.equal(references('princpio Dios cielos')[0], 'A');
+  assert.equal(references('princpiio Dios cielos')[0], 'A');
+  assert.equal(references('principio Dios cielos')[0], 'A');
+  assert.equal(references('principio crioo Dios')[0], 'A');
+  assert.equal(references('principio palabra Dios cielos')[0], 'A');
+  assert.equal(references('en el principio')[0], 'A');
+  assert.deepEqual(references('zzzzzz qqqqqq'), []);
+  assert.deepEqual(references('ab'), []);
+  context.fullBible = JSON.parse(fs.readFileSync(PUBLIC_DATABASE_PATH, 'utf8'));
+  vm.runInContext('searchableVerses = fullBible.books.flatMap(book => book.chapters.flatMap(chapter => chapter.verses.map(verse => ({ ...verse, searchWords: normalizeSearch(verse.reference + " " + verse.content).split(" ") }))));', context);
+  assert.equal(references('principio crio Dios')[0], 'G\u00e9nesis 1:1');
+  assert.ok(references('princpio Dios cielos').includes('G\u00e9nesis 1:1'));
+  vm.runInContext('books = fullBible.books;', context);
+  assert.equal(references('Miserable de mi Corintios')[0], 'Romanos 7:24');
+  assert.equal(references('Miserable de mi')[0], 'Romanos 7:24');
+  assert.equal(references('Miserable de mi Romanos')[0], 'Romanos 7:24');
+  assert.ok(references('Corintios')[0].includes('Corintios'));
 });

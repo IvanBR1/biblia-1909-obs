@@ -142,11 +142,12 @@
                 ></div>
               </div>
               <small class="field-help"
-                >Escribe al menos 3 caracteres. Las palabras se encuentran
-                aunque las escribas en otro orden.</small
+                >Escribe al menos 3 caracteres. Puedes omitir palabras, cambiar
+                su orden o equivocarte en una letra. Las mejores coincidencias aparecen primero.</small
               >
             </div>
             <div class="selection-meta" id="selection-meta">
+              <button id="passage-bookmark-button" class="passage-bookmark" type="button" aria-label="Guardar pasaje para después" title="Guardar pasaje para después" aria-pressed="false"><i class="fas fa-bookmark" aria-hidden="true"></i></button>
               <strong id="selected-reference">—</strong>
               <span id="selected-book-meta"
                 >Selecciona un libro, capítulo y versículo</span
@@ -555,5 +556,16 @@
     <script src="/themes/index.js"></script>
     <script src="/assets/js/control.js"></script>
     <script src="/assets/js/panel-appearance.js"></script>
+  <dialog id="history-clear-dialog" class="history-clear-dialog" aria-labelledby="history-clear-title" aria-describedby="history-clear-description">
+      <form method="dialog">
+        <h2 id="history-clear-title">Limpiar historial</h2>
+        <p id="history-clear-description">Puedes borrar todo, incluidos los guardados manualmente, o borrar solo los autom&#225;ticos y conservar tus marcadores.</p>
+        <div class="history-clear-actions">
+          <button type="submit" value="all" class="history-delete-all"><i class="fas fa-trash-can" aria-hidden="true"></i> Borrar todo</button>
+          <button type="submit" value="automatic">Solo autom&#225;ticos</button>
+          <button type="submit" value="cancel" autofocus>Cancelar</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

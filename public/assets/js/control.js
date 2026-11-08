@@ -7,7 +7,6 @@ async function waitForThemes() {
 const DATABASE_URL = "/data/bible.db.json";
 const ASSET_DB = "bibleObsAssets";
 const HISTORY_STORAGE_KEY = "biblePassageHistory";
-const HISTORY_LIMIT = 20;
 const $ = (id) => document.getElementById(id);
 
 // 1. Objetos vacíos: se llenan dentro de DOMContentLoaded cuando el DOM ya existe
@@ -30,6 +29,7 @@ let searchTimer;
 let databaseLoadPromise;
 let uiReady = false;
 let passageHistory = [];
+let automaticHistoryEnabled = true;
 const backgroundAnchors = [
   ["left top", "↖"],
   ["center top", "↑"],
@@ -71,46 +71,81 @@ function savePassageHistory() {
   } catch {}
 }
 
-function recordPassageHistory() {
+function matchesPassage(entry, passage) {
+  return entry.bookId === passage.bookId && entry.chapter === passage.chapter && entry.verse === passage.verse;
+}
+
+function selectedPassageEntry() {
   const { verse } = currentPassage();
-  if (!verse) return;
-  const item = {
-    bookId: currentBook,
-    chapter: currentChapter,
-    verse: currentVerse,
-    reference: verse.reference,
-  };
-  passageHistory = [
-    item,
-    ...passageHistory.filter(
-      (entry) =>
-        entry.bookId !== item.bookId ||
-        entry.chapter !== item.chapter ||
-        entry.verse !== item.verse,
-    ),
-  ].slice(0, HISTORY_LIMIT);
+  return verse && { bookId: currentBook, chapter: currentChapter, verse: currentVerse, reference: verse.reference };
+}
+
+function updateBookmarkButton() {
+  const item = selectedPassageEntry();
+  const saved = Boolean(item && passageHistory.some(entry => matchesPassage(entry, item) && entry.bookmarked));
+  elements.bookmarkButton?.setAttribute("aria-pressed", String(saved));
+  if (elements.bookmarkButton) {
+    elements.bookmarkButton.title = saved ? "Quitar marcador del pasaje" : "Guardar pasaje para después";
+    elements.bookmarkButton.setAttribute("aria-label", elements.bookmarkButton.title);
+  }
+}
+
+function refreshPassageHistory() {
   savePassageHistory();
+  updateBookmarkButton();
+  if (elements.bookHistoryDropdown?.classList.contains("visible")) renderPassageHistory();
+}
+
+function recordPassageHistory() {
+  const item = selectedPassageEntry();
+  if (!item) return;
+  const previous = passageHistory.find(entry => matchesPassage(entry, item));
+  passageHistory = [
+    { ...previous, ...item, presented: true },
+    ...passageHistory.filter(entry => !matchesPassage(entry, item)),
+  ];
+  refreshPassageHistory();
+}
+
+function togglePassageBookmark(item = selectedPassageEntry()) {
+  if (!item) return;
+  const existing = passageHistory.find(entry => matchesPassage(entry, item));
+  if (existing?.bookmarked) {
+    existing.bookmarked = false;
+    if (!existing.presented) passageHistory = passageHistory.filter(entry => entry !== existing);
+  } else if (existing) {
+    existing.bookmarked = true;
+  } else {
+    passageHistory.unshift({ ...item, bookmarked: true, presented: false });
+  }
+  refreshPassageHistory();
+}
+
+function clearPassageHistory(all = false) {
+  passageHistory = all ? [] : passageHistory.filter(entry => entry.bookmarked)
+    .map(entry => ({ ...entry, presented: false }));
+  refreshPassageHistory();
 }
 
 function renderPassageHistory() {
   const dropdown = elements.bookHistoryDropdown;
-  dropdown.innerHTML = passageHistory.length
-    ? passageHistory
-        .map(
-          (item, index) =>
-            `<div class="search-dropdown-item${index === 0 ? " active" : ""}" data-index="${index}"><div class="verse-result"><strong>${escapeHtml(item.reference)}</strong><small>Pasaje visualizado</small></div></div>`,
-        )
-        .join("")
-    : '<div class="no-results">Aún no hay pasajes en el historial</div>';
-  dropdown.querySelectorAll(".search-dropdown-item").forEach((node) => {
+  dropdown.innerHTML = `<div class="history-toolbar"><strong>Historial y guardados</strong><button type="button" id="clear-passage-history" aria-label="Limpiar historial" title="Limpiar historial"><i class="fas fa-trash-can" aria-hidden="true"></i></button></div>` + (passageHistory.length
+    ? passageHistory.map((item, index) =>
+      `<div class="history-row"><button type="button" class="search-dropdown-item history-select" data-index="${index}"><span class="verse-result"><strong>${escapeHtml(item.reference)}</strong><small>${escapeHtml(bookById.get(item.bookId)?.chapters.find(chapter => chapter.number === item.chapter)?.verses.find(verse => verse.number === item.verse)?.content || "")}</small></span></button><button type="button" class="history-bookmark" data-index="${index}" aria-pressed="${Boolean(item.bookmarked)}" aria-label="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}: ${escapeHtml(item.reference)}" title="${item.bookmarked ? "Quitar marcador" : "Guardar para después"}"><i class="fas fa-bookmark" aria-hidden="true"></i></button></div>`
+    ).join("")
+    : '<div class="no-results">Aún no hay pasajes en el historial</div>');
+  dropdown.querySelector("#clear-passage-history").addEventListener("click", () => {
+    elements.historyClearDialog.showModal();
+  });
+  dropdown.querySelectorAll(".history-select").forEach(node => {
     node.addEventListener("click", () => {
       const item = passageHistory[Number(node.dataset.index)];
-      if (item)
-        selectPassage(item.bookId, item.chapter, item.verse, {
-          recordHistory: true,
-        });
+      if (item) selectPassage(item.bookId, item.chapter, item.verse);
       togglePassageHistory(false);
     });
+  });
+  dropdown.querySelectorAll(".history-bookmark").forEach(node => {
+    node.addEventListener("click", () => togglePassageBookmark(passageHistory[Number(node.dataset.index)]));
   });
 }
 
@@ -228,6 +263,18 @@ function sendCurrentVerse() {
     themeId: selectedThemeId,
     settings: themeSettings,
   });
+  if (isVisible && automaticHistoryEnabled) recordPassageHistory();
+}
+
+function setPresentationVisible(visible) {
+  isVisible = visible;
+  if (isVisible) {
+    automaticHistoryEnabled = true;
+    sendCurrentVerse();
+  } else {
+    sendCommand({ action: "hide" });
+  }
+  saveState();
 }
 
 function renderPreviewPassage(container, verse, fallback) {
@@ -348,6 +395,7 @@ function selectPassage(
 ) {
   const book = bookById.get(bookId);
   if (!book) return;
+  automaticHistoryEnabled = options.automaticHistory !== false;
   currentBook = book.id;
   elements.bookSearch.value = book.name;
   setClearButton(elements.bookSearch, elements.bookSearchClear);
@@ -358,7 +406,7 @@ function selectPassage(
   if (isVisible) sendCurrentVerse();
   if (options.closeTextSearch)
     elements.textDropdown.classList.remove("visible");
-  if (options.recordHistory) recordPassageHistory();
+  updateBookmarkButton();
   saveState();
 }
 
@@ -369,6 +417,7 @@ function navigate(direction) {
       passage.book.id,
       passage.chapter.number,
       passage.verse.number,
+      { automaticHistory: false },
     );
 }
 
@@ -388,9 +437,7 @@ function renderBookResults(items) {
     .querySelectorAll(".search-dropdown-item")
     .forEach((node) => {
       node.addEventListener("click", () =>
-        selectPassage(bookResults[Number(node.dataset.index)].id, 1, 1, {
-          recordHistory: true,
-        }),
+        selectPassage(bookResults[Number(node.dataset.index)].id, 1, 1),
       );
     });
   elements.bookDropdown.classList.add("visible");
@@ -433,7 +480,6 @@ function renderTextResults(items, query) {
           const result = textResults[Number(node.dataset.index)];
           selectPassage(result.bookId, result.chapter, result.verse, {
             closeTextSearch: true,
-            recordHistory: true,
           });
         });
       });
@@ -441,27 +487,80 @@ function renderTextResults(items, query) {
   elements.textDropdown.classList.add("visible");
 }
 
-function searchBible(query = "") {
+// One insertion, deletion, substitution, or adjacent transposition.
+function isOneLetterAway(left, right) {
+  if (Math.abs(left.length - right.length) > 1) return false;
+  let index = 0;
+  while (index < left.length && left[index] === right[index]) index++;
+  if (index === left.length) return right.length - index <= 1;
+  if (left.length === right.length) {
+    return left.slice(index + 1) === right.slice(index + 1) ||
+      (left[index] === right[index + 1] && left[index + 1] === right[index] &&
+       left.slice(index + 2) === right.slice(index + 2));
+  }
+  return left.length > right.length
+    ? left.slice(index + 1) === right.slice(index)
+    : left.slice(index) === right.slice(index + 1);
+}
+
+function findBibleMatches(query) {
   const normalized = normalizeSearch(query);
-  if (normalized.length < 3) return renderTextResults([], query);
-  const terms = [...new Set(normalized.split(/\s+/u))];
+  if (normalized.length < 3) return [];
+  const queryTerms = [...new Set(normalized.split(/\s+/u))];
+  // A remembered book is a ranking hint, not a required word in the verse.
+  const bookWords = new Set(books.flatMap(book => normalizeSearch(book.name).split(" "))
+    .filter(word => word.length >= 4));
+  const bookHints = queryTerms.filter(term => bookWords.has(term));
+  const contentTerms = queryTerms.filter(term => !bookWords.has(term));
+  const hasTextQuery = contentTerms.some(term => term.length >= 3);
+  const terms = hasTextQuery ? contentTerms : queryTerms;
+  const phrase = hasTextQuery ? contentTerms.join(" ") : normalized;
+  // Cache comparisons per query: repeated Bible words are compared only once.
+  const wordMatches = new Map();
+  function matchesFor(word) {
+    if (!wordMatches.has(word)) {
+      wordMatches.set(word, terms.map(term => {
+        if (word === term) return 0;
+        if (term.length >= 3 && word.startsWith(term)) return 0.35;
+        if (term.length >= 4 && word.length >= 3 && isOneLetterAway(term, word)) return 1;
+        return Infinity;
+      }));
+    }
+    return wordMatches.get(word);
+  }
   const results = [];
   for (const verse of searchableVerses) {
-    const positions = terms.map((term) =>
-      verse.searchWords.findIndex(
-        (word) => word === term || word.startsWith(term),
-      ),
-    );
-    if (positions.every((position) => position >= 0))
-      results.push({
-        ...verse,
-        score: positions.reduce((total, position) => total + position, 0),
+    const costs = terms.map(() => Infinity);
+    const positions = terms.map(() => -1);
+    verse.searchWords.forEach((word, position) => {
+      matchesFor(word).forEach((cost, index) => {
+        if (cost < costs[index]) {
+          costs[index] = cost;
+          positions[index] = position;
+        }
       });
+    });
+    const matched = costs.filter(Number.isFinite).length;
+    // A longer query may contain one word the speaker remembers differently.
+    if (matched < terms.length - (terms.length >= 3 ? 1 : 0)) continue;
+    if (!terms.some((term, index) => term.length >= 3 && Number.isFinite(costs[index]))) continue;
+    const foundPositions = positions.filter(position => position >= 0);
+    const span = Math.max(...foundPositions) - Math.min(...foundPositions);
+    const exactPhrase = normalizeSearch(verse.content).includes(phrase);
+    const score = (terms.length - matched) * 1000 +
+      costs.filter(Number.isFinite).reduce((sum, cost) => sum + cost, 0) * 100 +
+      (exactPhrase ? 0 : 10) + Math.min(span, 100) / 10 +
+      Math.min(...foundPositions) / 1000 +
+      (hasTextQuery && bookHints.length && !bookHints.some(hint =>
+        normalizeSearch(verse.reference).split(" ").includes(hint)) ? 2 : 0);
+    results.push({ ...verse, score });
   }
-  results.sort(
-    (a, b) => a.score - b.score || a.reference.localeCompare(b.reference, "es"),
-  );
-  renderTextResults(results.slice(0, 50), query);
+  results.sort((a, b) => a.score - b.score || a.reference.localeCompare(b.reference, "es"));
+  return results.slice(0, 50);
+}
+
+function searchBible(query = "") {
+  renderTextResults(findBibleMatches(query), query);
 }
 
 async function loadDatabase() {
@@ -767,6 +866,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       bookSearch: $("book-search"),
       bookSearchClear: $("book-search-clear"),
       bookDropdown: $("book-dropdown"),
+      historyClearDialog: $("history-clear-dialog"),
+      bookmarkButton: $("passage-bookmark-button"),
       bookHistoryButton: $("book-history-button"),
       bookHistoryDropdown: $("book-history-dropdown"),
       chapter: $("chapter-select"),
@@ -823,7 +924,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch {}
     try {
       const history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || "[]");
-      passageHistory = Array.isArray(history) ? history.slice(0, HISTORY_LIMIT) : [];
+      passageHistory = Array.isArray(history) ? history.filter(entry => entry && typeof entry.reference === "string").map(entry => ({ ...entry, bookmarked: Boolean(entry.bookmarked), presented: entry.presented !== false })) : [];
     } catch {}
     selectedThemeId = window.BibleThemeRegistry.has(saved.themeId)
       ? saved.themeId
@@ -852,21 +953,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.bookSearch.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && bookResults[0]) {
         event.preventDefault();
-        selectPassage(bookResults[0].id, 1, 1, { recordHistory: true });
+        selectPassage(bookResults[0].id, 1, 1);
       }
       if (event.key === "Escape")
         elements.bookDropdown.classList.remove("visible");
     });
     elements.chapter.addEventListener("change", () =>
-      selectPassage(currentBook, Number(elements.chapter.value), 1, {
-        recordHistory: true,
-      }),
+      selectPassage(currentBook, Number(elements.chapter.value), 1),
     );
     elements.verse.addEventListener("change", () =>
-      selectPassage(currentBook, currentChapter, Number(elements.verse.value), {
-        recordHistory: true,
-      }),
+      selectPassage(currentBook, currentChapter, Number(elements.verse.value)),
     );
+    elements.historyClearDialog.addEventListener("close", () => {
+      const choice = elements.historyClearDialog.returnValue;
+      if (choice === "all" || choice === "automatic") clearPassageHistory(choice === "all");
+    });
+    elements.bookmarkButton.addEventListener("click", () => togglePassageBookmark());
     elements.bookHistoryButton.addEventListener("click", () =>
       togglePassageHistory(
         !elements.bookHistoryDropdown.classList.contains("visible"),
@@ -902,7 +1004,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const result = textResults[0];
         selectPassage(result.bookId, result.chapter, result.verse, {
           closeTextSearch: true,
-          recordHistory: true,
         });
       }
       if (event.key === "Escape")
@@ -932,10 +1033,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.previous.addEventListener("click", () => navigate(-1));
     elements.next.addEventListener("click", () => navigate(1));
     elements.visibility.addEventListener("change", () => {
-      isVisible = elements.visibility.checked;
-      if (isVisible) sendCurrentVerse();
-      else sendCommand({ action: "hide" });
-      saveState();
+      setPresentationVisible(elements.visibility.checked);
     });
 
     [
